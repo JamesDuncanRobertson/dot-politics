@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>POLITICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#ECE7DF; --red:#B8695E; --blue:#607EA0;
+  --text:#28231E; --mid:#6A6159; --dim:#A89E96;
+  --rule:rgba(0,0,0,0.07); --font:'Jost',system-ui,sans-serif;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{position:fixed;width:100%;height:100%;overflow:hidden;}
+body{
+  position:fixed;width:100%;height:100%;overflow:hidden;
+  background:var(--bg);font-family:var(--font);
+  user-select:none;-webkit-user-select:none;
+  display:flex;flex-direction:column;color:var(--text);
+  padding-top:var(--safe-t);
+}
+#hud{height:52px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--rule);flex-shrink:0;}
+.f-block{display:flex;align-items:center;gap:8px;}
+.f-pip{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.f-block.red .f-pip{background:var(--red);}
+.f-block.blue .f-pip{background:var(--blue);}
+.f-count{font-size:22px;font-weight:400;letter-spacing:-0.3px;}
+.f-block.red .f-count{color:var(--red);}
+.f-block.blue .f-count{color:var(--blue);}
+.hud-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.hud-name{font-size:8px;font-weight:400;letter-spacing:5px;text-transform:uppercase;color:var(--dim);}
+#status{font-size:8px;font-weight:400;letter-spacing:2px;text-transform:uppercase;color:var(--dim);min-height:11px;transition:color .4s;}
+#c{display:block;cursor:crosshair;flex:1;min-height:0;touch-action:none;-webkit-tap-highlight-color:transparent;}
+#bottom{height:52px;display:flex;border-top:1px solid var(--rule);flex-shrink:0;padding-bottom:var(--safe-b);}
+.act-btn{
+  flex:1;background:transparent;border:none;border-right:1px solid var(--rule);
+  font-family:var(--font);font-size:9px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;gap:6px;
+  -webkit-tap-highlight-color:transparent;transition:color .15s,background .15s;
+}
+.act-btn:last-child{border-right:none;}
+.act-btn:active{opacity:.6;}
+#team-btn{border-left:1px solid var(--rule);border-right:1px solid var(--rule);font-size:9px;letter-spacing:1px;}
+.overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(236,231,223,0.97);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 32px;padding-top:calc(24px + var(--safe-t));
+}
+.ov-title{font-size:clamp(40px,12vw,100px);font-weight:300;letter-spacing:clamp(8px,3vw,22px);text-transform:uppercase;color:var(--text);line-height:1;margin-bottom:18px;}
+.ov-sub{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--mid);margin-bottom:48px;text-align:center;}
+.ov-btn{background:none;border:1px solid rgba(0,0,0,0.15);color:var(--mid);font-family:var(--font);font-size:10px;font-weight:400;letter-spacing:5px;text-transform:uppercase;padding:14px 52px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.ov-btn:active{background:rgba(0,0,0,0.04);}
+#win-overlay{display:none;}
+#win-title{font-size:clamp(28px,7vw,64px);font-weight:300;letter-spacing:clamp(4px,2vw,14px);text-transform:uppercase;line-height:1.2;margin-bottom:10px;text-align:center;}
+#win-stats{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:var(--dim);margin-bottom:48px;}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="start-overlay">
+  <div class="ov-title">Politics</div>
+  <div class="ov-sub">Life isn't Fair</div>
+  <button class="ov-btn" id="begin-btn">Enter</button>
+</div>
+
+<div class="overlay" id="win-overlay">
+  <div id="win-title"></div>
+  <div id="win-stats"></div>
+  <button class="ov-btn" onclick="startGame()">Again</button>
+</div>
+
+<div id="hud">
+  <div class="f-block red"><div class="f-pip"></div><div class="f-count" id="rcount">10</div></div>
+  <div class="hud-mid"><div class="hud-name">Politics</div><div id="status"></div></div>
+  <div class="f-block blue"><div class="f-count" id="bcount">10</div><div class="f-pip"></div></div>
+</div>
+
+<canvas id="c"></canvas>
+
+<div id="bottom">
+  <button class="act-btn" id="pol-btn">Politician</button>
+  <button class="act-btn" id="cit-btn">Citizen</button>
+  <button class="act-btn" id="team-btn" style="color:var(--red);">▶ RED</button>
+  <button class="act-btn" id="emp-btn">Emperor</button>
+  <button class="act-btn" id="rev-btn">Revolution</button>
+</div>
+
+<script>
+'use strict';
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let CW, CH, DPR = 1;
+
+function sizeCanvas() {
+  DPR = Math.min(window.devicePixelRatio || 1, 3);
+  const vv  = window.visualViewport;
+  const vw  = vv ? vv.width  : window.innerWidth;
+  const vh  = vv ? vv.height : window.innerHeight;
+  const hudH = document.getElementById('hud').offsetHeight;
+  const botH = document.getElementById('bottom').offsetHeight;
+  CW = Math.floor(vw);
+  CH = Math.max(200, Math.floor(vh) - hudH - botH);
+  canvas.width        = Math.round(CW * DPR);
+  canvas.height       = Math.round(CH * DPR);
+  canvas.style.width  = CW + 'px';
+  canvas.style.height = CH + 'px';
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(DPR, DPR);
+}
+window.addEventListener('resize', sizeCanvas);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeCanvas);
+
+// ── Constants ────────────────────────────────────────────────
+const MIN_SZ=4, MAX_SZ=70, SHRINK=2, GROW=2, BOUNCE=0.82, EMP_SIZE=36;
+
+// ── Palettes ─────────────────────────────────────────────────
+const POL_PALETTE = ['#BF9E58','#9A7E5E','#8A9E6A','#C48A7A','#9A8ABF','#7AAA8A'];
+const REV_PALETTE = ['#5A9FA4','#7A9ABF','#9A7ABF','#7ABF9A','#BF9A7A','#9ABF7A'];
+const EMP_PALETTE = ['#7A5E8A','#8A5E6A','#5E7A66','#5E6A8A','#8A6E5E','#6A6E78'];
+let polIdx = 0, revIdx = 0, empIdx = 0;
+
+// Named colour display values
+const FILL   = { red:'#B8695E', blue:'#607EA0', white:'#B8AFA6' };
+const STROKE = { red:'#9E5A50', blue:'#4E6888', white:'#A09790' };
+
+function darkenHex(hex, amt=0.13) {
+  const n=parseInt(hex.slice(1),16);
+  const r=Math.max(0,(n>>16)-Math.round(amt*255));
+  const g=Math.max(0,((n>>8)&0xff)-Math.round(amt*255));
+  const b=Math.max(0,(n&0xff)-Math.round(amt*255));
+  return `rgb(${r},${g},${b})`;
+}
+
+function getDisplay(color) {
+  if (color.startsWith('#')) return { fill: color, stroke: darkenHex(color) };
+  return { fill: FILL[color]||'#999', stroke: STROKE[color]||'#777' };
+}
+
+// ── Team switch ──────────────────────────────────────────────
+let currentPlayer = 'red';
+function toggleTeam() {
+  currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+  const btn = document.getElementById('team-btn');
+  btn.textContent = `▶ ${currentPlayer.toUpperCase()}`;
+  btn.style.color = currentPlayer === 'red' ? 'var(--red)' : 'var(--blue)';
+}
+
+// ── Dot ──────────────────────────────────────────────────────
+class Dot {
+  constructor(x, y, color, type='normal', faction=null) {
+    this.x=x; this.y=y;
+    this.color=color;   // 'red'|'blue'|'white'|'#hex'
+    this.type=type;     // 'normal'|'politician'|'revolutionary'  (OG indicator)
+    this.faction=faction; // null|'politician'|'revolutionary'    (behaviour)
+    this.size = type==='politician' ? 20 : type==='revolutionary' ? 7 : type==='emperor' ? EMP_SIZE : 10;
+    const base = type==='politician' ? 0.85 : type==='revolutionary' ? 4.8 : type==='emperor' ? 0.5 : 1.2+Math.random()*0.8;
+    const spd = base*(0.6+Math.random()*0.8);
+    const a = Math.random()*Math.PI*2;
+    this.vx=Math.cos(a)*spd; this.vy=Math.sin(a)*spd;
+  }
+
+  update() {
+    // Revolutionary OR politician parents reaching emperor size ascend to OG emperor
+    if((this.type==='revolutionary'||this.type==='politician') && this.size>=EMP_SIZE){
+      this.type='emperor';
+      this.faction='emperor';
+      const sp=Math.hypot(this.vx,this.vy)||0.1;
+      const base=0.5*(0.6+Math.random()*0.8);
+      this.vx=this.vx/sp*base; this.vy=this.vy/sp*base;
+    }
+    this.x+=this.vx; this.y+=this.vy;
+    this.size=Math.max(MIN_SZ,Math.min(MAX_SZ,this.size));
+    const r=this.size;
+    if(this.x<r)    {this.x=r;    this.vx= Math.abs(this.vx);}
+    if(this.x>CW-r) {this.x=CW-r; this.vx=-Math.abs(this.vx);}
+    if(this.y<r)    {this.y=r;    this.vy= Math.abs(this.vy);}
+    if(this.y>CH-r) {this.y=CH-r; this.vy=-Math.abs(this.vy);}
+    const spd=Math.hypot(this.vx,this.vy);
+    const mx=this.type==='revolutionary'?9:this.type==='emperor'?3:5;
+    if(spd>mx  &&spd>0){this.vx*=mx/spd;  this.vy*=mx/spd;}
+    if(spd<0.28&&spd>0){this.vx*=0.28/spd;this.vy*=0.28/spd;}
+  }
+
+  draw(t) {
+    const {fill,stroke}=getDisplay(this.color);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.strokeStyle=stroke; ctx.lineWidth=0.75; ctx.stroke();
+
+    if(this.type==='politician') {
+      ctx.save();
+      ctx.translate(this.x,this.y);
+      ctx.rotate(t*0.001);
+      const ringC=darkenHex(this.color.startsWith('#')?this.color:'#BF9E58',0.05);
+      for(let i=0;i<6;i++){
+        const a0=(i/6)*Math.PI*2;
+        ctx.beginPath(); ctx.arc(0,0,this.size+6,a0,a0+0.28);
+        ctx.strokeStyle=ringC+'99'; ctx.lineWidth=1.5; ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    if(this.type==='revolutionary') {
+      const p=0.5+0.5*Math.sin(t*0.012);
+      const ringC=this.color.startsWith('#')?this.color:'#5A9FA4';
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.size+4+p*3,0,Math.PI*2);
+      ctx.strokeStyle=ringC+(Math.round((0.3+p*0.2)*255).toString(16).padStart(2,'0'));
+      ctx.lineWidth=1; ctx.stroke();
+    }
+
+    if(this.type==='emperor') {
+      // Solid thick imperial ring — no animation, no motion. Authority.
+      const baseHex=this.color.startsWith('#')?this.color:'#7A5E8A';
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.size+4,0,Math.PI*2);
+      ctx.strokeStyle=darkenHex(baseHex,0.22);
+      ctx.lineWidth=2.5; ctx.stroke();
+      // inner ring for depth
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,this.size+1.5,0,Math.PI*2);
+      ctx.strokeStyle=darkenHex(baseHex,0.1);
+      ctx.lineWidth=1; ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  hits(px,py){return(px-this.x)**2+(py-this.y)**2<=(this.size+10)**2;}
+}
+
+// ── State ────────────────────────────────────────────────────
+let dots=[], running=false, fx=[], totalRevMass=0, emperorMassByColor={};
+
+function startGame() {
+  document.getElementById('win-overlay').style.display='none';
+  sizeCanvas();
+  dots=[]; fx=[]; polIdx=0; revIdx=0; empIdx=0;
+  ctx.fillStyle='#ECE7DF'; ctx.fillRect(0,0,CW,CH);
+  const m=22;
+  const place=(col,type='normal',faction=null)=>
+    dots.push(new Dot(m+Math.random()*(CW-m*2), m+Math.random()*(CH-m*2), col, type, faction));
+  for(let i=0;i<10;i++) place('red');
+  for(let i=0;i<10;i++) place('blue');
+  for(let i=0;i<10;i++) place('white');
+  running=true;
+}
+
+// ── Input ────────────────────────────────────────────────────
+function handleAction(clientX, clientY, player) {
+  if(!running) return;
+  const rect=canvas.getBoundingClientRect();
+  const mx=(clientX-rect.left)*(CW/rect.width);
+  const my=(clientY-rect.top)*(CH/rect.height);
+  for(let i=dots.length-1;i>=0;i--) {
+    const d=dots[i]; if(!d.hits(mx,my)) continue;
+    if(d.faction==='emperor') return; // emperors can't be touched by clicks
+    if(d.faction==='revolutionary') {
+      // Claim revolutionary instantly
+      d.color=player; d.faction=null; d.type='normal';
+      addFX(mx,my,player,26);
+    } else if(d.color===player) {
+      d.size=Math.min(MAX_SZ,d.size+3); addFX(mx,my,player,14);
+    } else if(d.color==='white') {
+      d.color=player; addFX(mx,my,player,20);
+    } else {
+      // Neutralise: enemy, politician-faction, or anything else
+      d.color='white'; d.faction=null; d.type='normal'; addFX(mx,my,'white',20);
+    }
+    return;
+  }
+}
+
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches) handleAction(t.clientX,t.clientY,currentPlayer);
+},{passive:false});
+canvas.addEventListener('click',e=>{e.preventDefault();handleAction(e.clientX,e.clientY,currentPlayer);});
+canvas.addEventListener('contextmenu',e=>{e.preventDefault();handleAction(e.clientX,e.clientY,currentPlayer==='red'?'blue':'red');});
+
+document.getElementById('team-btn').addEventListener('click',toggleTeam);
+document.getElementById('pol-btn').addEventListener('click',()=>{
+  if(!running) return;
+  const col=POL_PALETTE[polIdx%POL_PALETTE.length]; polIdx++;
+  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'politician','politician'));
+});
+document.getElementById('rev-btn').addEventListener('click',()=>{
+  if(!running) return;
+  const col=REV_PALETTE[revIdx%REV_PALETTE.length]; revIdx++;
+  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'revolutionary','revolutionary'));
+});
+document.getElementById('cit-btn').addEventListener('click',()=>{
+  if(!running) return;
+  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8,'white'));
+});
+document.getElementById('emp-btn').addEventListener('click',()=>{
+  if(!running) return;
+  const col=EMP_PALETTE[empIdx%EMP_PALETTE.length]; empIdx++;
+  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'emperor','emperor'));
+});
+
+// ── Click FX ─────────────────────────────────────────────────
+function addFX(x,y,color,maxR){
+  const {fill}=getDisplay(color);
+  fx.push({x,y,fill,r:maxR*.15,maxR,a:.8});
+}
+function drawFX(){
+  for(let i=fx.length-1;i>=0;i--){
+    const f=fx[i];
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    ctx.strokeStyle=f.fill+(Math.round(f.a*255).toString(16).padStart(2,'0'));
+    ctx.lineWidth=1; ctx.stroke();
+    f.r=Math.min(f.maxR,f.r+2.4); f.a-=0.055;
+    if(f.a<=0) fx.splice(i,1);
+  }
+}
+
+// ── Conversion helpers ───────────────────────────────────────
+function neutralise(d){
+  if(d.faction==='politician'){ d.color='white'; return; }
+  if(d.faction==='emperor') return;
+  d.color='white'; d.faction=null; d.type='normal';
+  d.size=Math.max(MIN_SZ,d.size-SHRINK);
+}
+function directConvert(d,toColor){
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  if(d.faction==='emperor') return;
+  d.color=toColor; d.faction=null; d.type='normal';
+  d.size=Math.max(MIN_SZ,d.size-SHRINK);
+}
+function politicize(d,toColor){
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  d.color=toColor; d.faction='politician'; d.type='normal';
+  d.size=Math.min(MAX_SZ,d.size+3);
+  const spd=Math.hypot(d.vx,d.vy)||0.1;
+  d.vx=d.vx/spd*Math.max(0.2,spd*0.45);
+  d.vy=d.vy/spd*Math.max(0.2,spd*0.45);
+}
+function emperize(d,toColor){
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  d.color=toColor; d.faction='emperor'; d.type='normal';
+  const spd=Math.hypot(d.vx,d.vy)||0.1;
+  d.vx=d.vx/spd*Math.max(0.15,spd*0.4);
+  d.vy=d.vy/spd*Math.max(0.15,spd*0.4);
+}
+function cyanize(d,toColor){
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  d.color=toColor; d.faction='revolutionary'; d.type='normal';
+  d.size=Math.min(MAX_SZ,d.size+GROW); // converted target GROWS
+  const spd=Math.hypot(d.vx,d.vy)||1, ns=Math.min(9,spd*1.6);
+  d.vx=d.vx/spd*ns; d.vy=d.vy/spd*ns;
+}
+
+// When a parent leaves their role (dies or converts), their same-colour children become neutral
+function cascadeNeutralize(parent){
+  const f=parent.faction, c=parent.color;
+  for(const d of dots){
+    if(d===parent || d.dead) continue;
+    if(d.color===c && d.faction===f && d.type==='normal'){
+      d.color='white'; d.faction=null;
+    }
+  }
+}
+
+// Keep revolutionaries from going sluggish after a hit — never below their base speed
+function keepRevSpeed(d){
+  const sp=Math.hypot(d.vx,d.vy)||0.1;
+  const target=Math.max(sp,4.8);
+  d.vx=d.vx/sp*target; d.vy=d.vy/sp*target;
+}
+
+// ── Collisions ───────────────────────────────────────────────
+function effR(d){return d.type==='emperor'?d.size+4:d.size;}
+
+function collide(){
+  for(let i=0;i<dots.length;i++){
+    if(dots[i].dead) continue;
+    for(let j=i+1;j<dots.length;j++){
+      if(dots[j].dead) continue;
+      const a=dots[i],b=dots[j];
+      const ra=effR(a), rb=effR(b);
+      const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy,md=ra+rb;
+      if(d2>=md*md) continue;
+      const d=Math.sqrt(d2); if(d<.001) continue;
+      const nx=dx/d,ny=dy/d;
+      const sep=(md-d)*.52;
+      a.x-=nx*sep; a.y-=ny*sep; b.x+=nx*sep; b.y+=ny*sep;
+      const ma=a.size,mb=b.size,vn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+      if(vn<0){
+        const imp=-(1+BOUNCE)*vn*ma*mb/(ma+mb);
+        a.vx-=(imp/ma)*nx; a.vy-=(imp/ma)*ny;
+        b.vx+=(imp/mb)*nx; b.vy+=(imp/mb)*ny;
+        applyConversion(a,b);
+      }
+    }
+  }
+}
+
+function applyConversion(a,b){
+  const aOG=a.type==='politician'||a.type==='revolutionary'||a.type==='emperor';
+  const bOG=b.type==='politician'||b.type==='revolutionary'||b.type==='emperor';
+
+  // ── Override: Any politician bigger than any revolutionary — politicize them (and cascade if it's a rev parent)
+  if(a.faction==='politician' && b.faction==='revolutionary' && a.size>b.size){
+    if(b.type==='revolutionary') cascadeNeutralize(b);
+    politicize(b,a.color);
+    a.size=Math.min(MAX_SZ,a.size+GROW);
+    if(a.type==='politician'){
+      const ps=Math.hypot(a.vx,a.vy)||0.1;a.vx=a.vx/ps*Math.min(5,ps*1.25);a.vy=a.vy/ps*Math.min(5,ps*1.25);
+    }
+    return;
+  }
+  if(b.faction==='politician' && a.faction==='revolutionary' && b.size>a.size){
+    if(a.type==='revolutionary') cascadeNeutralize(a);
+    politicize(a,b.color);
+    b.size=Math.min(MAX_SZ,b.size+GROW);
+    if(b.type==='politician'){
+      const ps=Math.hypot(b.vx,b.vy)||0.1;b.vx=b.vx/ps*Math.min(5,ps*1.25);b.vy=b.vy/ps*Math.min(5,ps*1.25);
+    }
+    return;
+  }
+
+  // ── Override: Bigger red/blue claims parent politicians — pol keeps pol behaviour, just changes loyalty
+  if((a.color==='red'||a.color==='blue') && b.type==='politician' && a.size>b.size){
+    b.color=a.color; return;
+  }
+  if((b.color==='red'||b.color==='blue') && a.type==='politician' && b.size>a.size){
+    a.color=b.color; return;
+  }
+
+  // ── Override: Rev child converts emperor child of equal size — but only when
+  //    that emperor's colour mass isn't enough to overpower the rev (otherwise mass rule wins)
+  if(a.faction==='revolutionary' && a.type==='normal' && b.faction==='emperor' && b.type==='normal' && Math.abs(a.size-b.size)<0.5 && (emperorMassByColor[b.color]||0)<=a.size*a.size){
+    cyanize(b,a.color);
+    a.size=Math.min(MAX_SZ,a.size+GROW);
+    keepRevSpeed(a);
+    return;
+  }
+  if(b.faction==='revolutionary' && b.type==='normal' && a.faction==='emperor' && a.type==='normal' && Math.abs(a.size-b.size)<0.5 && (emperorMassByColor[a.color]||0)<=b.size*b.size){
+    cyanize(a,b.color);
+    b.size=Math.min(MAX_SZ,b.size+GROW);
+    keepRevSpeed(b);
+    return;
+  }
+
+  // ── Override: OG rev kills bigger emperor. OG emperor only falls when totalRevMass > that emperor's colour mass.
+  if(a.type==='revolutionary' && b.faction==='emperor' && b.size>a.size){
+    if(b.type!=='emperor' || totalRevMass>(emperorMassByColor[b.color]||0)){
+      if(b.type==='emperor') cascadeNeutralize(b);
+      b.dead=true; a.size=Math.min(MAX_SZ,a.size+GROW); keepRevSpeed(a); return;
+    }
+  }
+  if(b.type==='revolutionary' && a.faction==='emperor' && a.size>b.size){
+    if(a.type!=='emperor' || totalRevMass>(emperorMassByColor[a.color]||0)){
+      if(a.type==='emperor') cascadeNeutralize(a);
+      a.dead=true; b.size=Math.min(MAX_SZ,b.size+GROW); keepRevSpeed(b); return;
+    }
+  }
+
+  // ── Revolutionary faction: kills bigger (mass-rule, OG-rev override, or non-OG), converts smaller
+  if(a.faction==='revolutionary' && b.faction!=='revolutionary'){
+    if(b.size<a.size){
+      cyanize(b,a.color);
+      a.size=Math.min(MAX_SZ,a.size+GROW);
+      keepRevSpeed(a);
+      return;
+    }
+    if(b.size>a.size){
+      const canKill = !bOG
+        || (b.type==='emperor'
+              ? (a.type==='revolutionary' && totalRevMass>(emperorMassByColor[b.color]||0))
+              : totalRevMass>b.size*b.size);
+      if(canKill){
+        if(b.type==='politician'||b.type==='emperor') cascadeNeutralize(b);
+        b.dead=true;
+        a.size=Math.min(MAX_SZ,a.size+GROW);
+        keepRevSpeed(a);
+        return;
+      }
+    }
+    return;
+  }
+  if(b.faction==='revolutionary' && a.faction!=='revolutionary'){
+    if(a.size<b.size){
+      cyanize(a,b.color);
+      b.size=Math.min(MAX_SZ,b.size+GROW);
+      keepRevSpeed(b);
+      return;
+    }
+    if(a.size>b.size){
+      const canKill = !aOG
+        || (a.type==='emperor'
+              ? (b.type==='revolutionary' && totalRevMass>(emperorMassByColor[a.color]||0))
+              : totalRevMass>a.size*a.size);
+      if(canKill){
+        if(a.type==='politician'||a.type==='emperor') cascadeNeutralize(a);
+        a.dead=true;
+        b.size=Math.min(MAX_SZ,b.size+GROW);
+        keepRevSpeed(b);
+        return;
+      }
+    }
+    return;
+  }
+  if(a.faction==='revolutionary' && b.faction==='revolutionary'){
+    // Same colour: smaller grows (cohesion)
+    if(a.color===b.color){
+      (a.size<=b.size?a:b).size=Math.min(MAX_SZ,Math.min(a.size,b.size)+GROW);
+      return;
+    }
+    // Different colours: smaller eliminates bigger — but rev parents can't be killed, they convert
+    if(a.size<b.size){
+      if(b.type==='revolutionary'){
+        cascadeNeutralize(b);
+        cyanize(b,a.color); // demoted to rev child of a's colour
+        a.size=Math.min(MAX_SZ,a.size+GROW);
+        keepRevSpeed(a);
+        return;
+      }
+      b.dead=true;
+      a.size=Math.min(MAX_SZ,a.size+GROW);
+      keepRevSpeed(a);
+      return;
+    }
+    if(b.size<a.size){
+      if(a.type==='revolutionary'){
+        cascadeNeutralize(a);
+        cyanize(a,b.color);
+        b.size=Math.min(MAX_SZ,b.size+GROW);
+        keepRevSpeed(b);
+        return;
+      }
+      a.dead=true;
+      b.size=Math.min(MAX_SZ,b.size+GROW);
+      keepRevSpeed(b);
+      return;
+    }
+    return; // equal size, bounce
+  }
+
+  // ── Emperor faction: a's colour mass > target's mass → convert the target.
+  //    Sits BEFORE politician block so emperor can claim OG politicians.
+  if(a.faction==='emperor' && b.faction!=='emperor'){
+    if((emperorMassByColor[a.color]||0) > b.size*b.size){
+      if(b.type==='revolutionary') cascadeNeutralize(b);
+      emperize(b,a.color);
+      if(a.type==='emperor'){ a.vx*=0.85; a.vy*=0.85; }
+      return;
+    }
+    if(a.type==='emperor') return;
+  }
+  if(b.faction==='emperor' && a.faction!=='emperor'){
+    if((emperorMassByColor[b.color]||0) > a.size*a.size){
+      if(a.type==='revolutionary') cascadeNeutralize(a);
+      emperize(a,b.color);
+      if(b.type==='emperor'){ b.vx*=0.85; b.vy*=0.85; }
+      return;
+    }
+    if(b.type==='emperor') return;
+  }
+  if(a.faction==='emperor' && b.faction==='emperor'){
+    // OG recruits children of different colour
+    if(a.type==='emperor' && b.type==='normal' && a.color!==b.color){ b.color=a.color; }
+    else if(b.type==='emperor' && a.type==='normal' && a.color!==b.color){ a.color=b.color; }
+    return;
+  }
+
+  // ── Politician faction: converts smaller, shrinks self
+  // OG politician immune to bigger; children fall through
+  // ── Politician faction: ANY smaller target becomes a fellow evangelist (politicized).
+  //    Pol grows per conversion. Emperors are untouchable (only revs can take them down).
+  if(a.faction==='politician' && b.faction!=='politician'){
+    if(b.faction==='emperor') return; // emperors untouchable by pol
+    if(b.size<a.size){
+      politicize(b,a.color);
+      a.size=Math.min(MAX_SZ,a.size+GROW);
+      if(a.type==='politician'){
+        const ps=Math.hypot(a.vx,a.vy)||0.1;a.vx=a.vx/ps*Math.min(5,ps*1.25);a.vy=a.vy/ps*Math.min(5,ps*1.25);
+      }
+      return;
+    }
+    return;
+  }
+  if(b.faction==='politician' && a.faction!=='politician'){
+    if(a.faction==='emperor') return;
+    if(a.size<b.size){
+      politicize(a,b.color);
+      b.size=Math.min(MAX_SZ,b.size+GROW);
+      if(b.type==='politician'){
+        const ps=Math.hypot(b.vx,b.vy)||0.1;b.vx=b.vx/ps*Math.min(5,ps*1.25);b.vy=b.vy/ps*Math.min(5,ps*1.25);
+      }
+      return;
+    }
+    return;
+  }
+  if(a.faction==='politician' && b.faction==='politician'){
+    // Different colour: bigger pol evangelises smaller pol (just colour change, identity retained)
+    if(a.color!==b.color && Math.abs(a.size-b.size)>=0.5){
+      const lg=a.size>b.size?a:b, sm=lg===a?b:a;
+      sm.color=lg.color;
+      if(lg.type==='politician') lg.size=Math.min(MAX_SZ,lg.size+GROW);
+      return;
+    }
+    // Same colour: smaller grows (cohesion)
+    (a.size<=b.size?a:b).size=Math.min(MAX_SZ,Math.min(a.size,b.size)+GROW);
+    return;
+  }
+
+  // ── Normal: red, blue, white ──
+  if(a.color==='white'&&b.color==='white') return;
+  if(a.color===b.color){(a.size<=b.size?a:b).size=Math.min(MAX_SZ,Math.min(a.size,b.size)+GROW);return;}
+  if(Math.abs(a.size-b.size)<0.5) return;
+
+  const lg=a.size>b.size?a:b, sm=lg===a?b:a;
+  if(sm.type==='revolutionary'||sm.type==='emperor'||sm.faction==='emperor') return; // OG rev and any emperor immune
+  // Note: politicians (parent or child) DO interact here — they take lg's colour but keep pol identity (handled in helpers)
+
+  const lgRB=lg.color==='red'||lg.color==='blue';
+  if(lgRB&&(sm.color==='red'||sm.color==='blue')){
+    if(sm.faction==='politician'){ sm.color=lg.color; return; } // pol evangelises for new boss
+    neutralise(sm); return;
+  }
+  directConvert(sm,lg.color);
+}
+
+// ── Win ──────────────────────────────────────────────────────
+function checkWin(){
+  const total=dots.length; if(!total) return;
+  const rc=dots.filter(d=>d.color==='red').length;
+  const bc=dots.filter(d=>d.color==='blue').length;
+  document.getElementById('rcount').textContent=rc;
+  document.getElementById('bcount').textContent=bc;
+
+  // Washout: every dot must be exactly the same colour AND a real population
+  if(total>=5){
+    const first=dots[0].color;
+    if(dots.every(d=>d.color===first)){
+      if(first==='red'){endGame('Red wins','#B8695E',`Red ${rc}  ·  Blue ${bc}`);return;}
+      if(first==='blue'){endGame('Blue wins','#607EA0',`Red ${rc}  ·  Blue ${bc}`);return;}
+      if(first==='white'){endGame('We finally got rid of politics','#A89E96',`${total} citizens`);return;}
+      const f=dots[0].faction;
+      if(f==='revolutionary'){endGame('Revolution swept the land',first,`Total ${total}`);return;}
+      if(f==='politician'){endGame('Another party took over',first,`Total ${total}`);return;}
+      if(f==='emperor'){endGame('The Emperor reigns',first,`Total ${total}`);return;}
+    }
+  }
+
+  // Status
+  const statusEl=document.getElementById('status');
+  const leader=rc>bc?'red':bc>rc?'blue':null;
+  if(leader){
+    statusEl.textContent=`${leader} ${Math.round((leader==='red'?rc:bc)/total*100)}%`;
+    statusEl.style.color=leader==='red'?'var(--red)':'var(--blue)';
+  } else {statusEl.textContent='';statusEl.style.color='var(--dim)';}
+}
+
+function endGame(title,color,stats){
+  running=false;
+  const wt=document.getElementById('win-title');
+  wt.textContent=title; wt.style.color=color;
+  document.getElementById('win-stats').textContent=stats;
+  document.getElementById('win-overlay').style.display='flex';
+}
+
+// ── Loop ─────────────────────────────────────────────────────
+function loop(t){
+  requestAnimationFrame(loop); if(!running) return;
+  totalRevMass=0; emperorMassByColor={};
+  for(const d of dots){
+    if(d.faction==='emperor'){
+      emperorMassByColor[d.color]=(emperorMassByColor[d.color]||0)+d.size*d.size;
+    } else if(d.faction==='revolutionary') totalRevMass+=d.size*d.size;
+  }
+  ctx.fillStyle='#ECE7DF'; ctx.fillRect(0,0,CW,CH);
+  for(const d of dots) d.update();
+  collide();
+  if(dots.some(d=>d.dead)) dots=dots.filter(d=>!d.dead);
+  for(const d of dots) d.draw(t);
+  drawFX(); checkWin();
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+document.getElementById('begin-btn').addEventListener('click',()=>{
+  document.getElementById('start-overlay').style.display='none';
+  startGame();
+});
+document.getElementById('begin-btn').addEventListener('touchend',e=>{
+  e.preventDefault();
+  document.getElementById('start-overlay').style.display='none';
+  startGame();
+},{passive:false});
+
+sizeCanvas();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
