@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>POLITICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #ECE7DF;
+  --red:    #B8695E;
+  --blue:   #607EA0;
+  --yellow: #BF9E58;
+  --cyan:   #5A9FA4;
+  --text:   #28231E;
+  --mid:    #6A6159;
+  --dim:    #A89E96;
+  --rule:   rgba(0,0,0,0.07);
+  --font:   'Jost', system-ui, sans-serif;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+/* Lock the page — prevents iOS rubber-band scroll and viewport resize */
+html {
+  position: fixed;
+  width: 100%; height: 100%;
+  overflow: hidden;
+}
+body {
+  position: fixed;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: var(--font);
+  user-select: none; -webkit-user-select: none;
+  display: flex; flex-direction: column;
+  color: var(--text);
+  /* Push content below notch */
+  padding-top: var(--safe-t);
+}
+
+/* ── HUD ── */
+#hud {
+  height: 52px;
+  display: flex; align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
+}
+.f-block { display:flex; align-items:center; gap:8px; }
+.f-pip   { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.f-block.red  .f-pip { background:var(--red); }
+.f-block.blue .f-pip { background:var(--blue); }
+.f-count { font-size:22px; font-weight:400; letter-spacing:-0.3px; }
+.f-block.red  .f-count { color:var(--red); }
+.f-block.blue .f-count { color:var(--blue); }
+.hud-mid { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+.hud-name { font-size:8px; font-weight:400; letter-spacing:5px; text-transform:uppercase; color:var(--dim); }
+#status   { font-size:8px; font-weight:400; letter-spacing:2px; text-transform:uppercase; color:var(--dim); min-height:11px; transition:color .4s; }
+
+/* ── CANVAS ── */
+#c {
+  display: block;
+  cursor: crosshair;
+  flex: 1;
+  min-height: 0;
+  touch-action: none; /* critical — stops scroll eating touches */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── BOTTOM ── */
+#bottom {
+  height: 52px;
+  display: flex;
+  border-top: 1px solid var(--rule);
+  flex-shrink: 0;
+  /* Push above home indicator */
+  padding-bottom: var(--safe-b);
+}
+.act-btn {
+  flex: 1; background: transparent; border: none;
+  border-right: 1px solid var(--rule);
+  font-family: var(--font); font-size: 9px;
+  font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; color: var(--dim);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .15s, background .15s;
+}
+.act-btn:last-child { border-right: none; }
+.act-btn.pol:active { color:var(--yellow); background:rgba(191,158,88,.06); }
+.act-btn.rev:active { color:var(--cyan);   background:rgba(90,159,164,.06); }
+
+/* team button */
+#team-btn {
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  font-size: 9px; letter-spacing: 1px;
+}
+#team-btn:active { background: rgba(0,0,0,0.04); }
+
+/* ── OVERLAYS ── */
+.overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(236,231,223,0.97);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px 32px;
+  padding-top: calc(24px + var(--safe-t));
+}
+
+.ov-title {
+  font-size: clamp(40px, 12vw, 100px);
+  font-weight: 300;
+  letter-spacing: clamp(8px, 3vw, 22px);
+  text-transform: uppercase; color: var(--text);
+  line-height: 1; margin-bottom: 36px;
+}
+
+/* Rules: side-by-side on wide, stacked on narrow */
+.ov-rules {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  margin-bottom: 32px;
+  font-size: 11px; line-height: 2.4; font-weight: 400;
+  text-transform: uppercase; letter-spacing: 1px; color: var(--mid);
+  width: 100%; max-width: 420px;
+}
+@media (max-width: 400px) {
+  .ov-rules { flex-direction: column; gap: 20px; }
+  .rsep { display: none; }
+  .rb { text-align: left; }
+  .rb .rh { text-align: left; }
+}
+.ov-rules .rh { font-weight: 600; letter-spacing: 2px; margin-bottom: 2px; font-size: 10px; }
+.rr .rh { color: var(--red); }
+.rb .rh { color: var(--blue); text-align: right; }
+.rb { text-align: right; }
+.rsep { width: 1px; background: var(--rule); flex-shrink: 0; }
+
+.ov-legend {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 40px;
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--mid);
+  align-items: flex-start;
+}
+.leg { display:flex; align-items:center; gap:8px; }
+.legdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+.ov-note {
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 36px; text-align: center;
+}
+
+.ov-btn {
+  background: none;
+  border: 1px solid rgba(0,0,0,0.15); color: var(--mid);
+  font-family: var(--font); font-size: 10px; font-weight: 400;
+  letter-spacing: 5px; text-transform: uppercase;
+  padding: 14px 52px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ov-btn:active { background: rgba(0,0,0,0.04); }
+
+#win-overlay { display: none; }
+#win-title {
+  font-size: clamp(40px, 12vw, 100px);
+  font-weight: 300;
+  letter-spacing: clamp(6px, 2vw, 22px);
+  text-transform: uppercase; line-height: 1; margin-bottom: 10px;
+}
+#win-stats {
+  font-size: 9px; letter-spacing: 5px;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 48px;
+}
+</style>
+</head>
+<body>
+
+<!-- ── START ── -->
+<div class="overlay" id="start-overlay">
+  <div class="ov-title">Politics</div>
+  <div class="ov-rules">
+    <div class="rr">
+      <div class="rh">Tap to play</div>
+      <div>White → your colour</div>
+      <div>Enemy / Yellow → neutral</div>
+      <div>Cyan → claim instantly</div>
+      <div>Own dot → grow</div>
+    </div>
+    <div class="rsep"></div>
+    <div class="rb">
+      <div class="rh">Two players</div>
+      <div>Use team switch</div>
+      <div>to hand off turns</div>
+      <div>or play solo</div>
+      <div>vs the chaos</div>
+    </div>
+  </div>
+  <div class="ov-legend">
+    <div class="leg"><div class="legdot" style="background:var(--yellow)"></div>Politician — converts smaller, shrinks itself</div>
+    <div class="leg"><div class="legdot" style="background:var(--cyan)"></div>Revolutionary — converts bigger, grows itself</div>
+  </div>
+  <div class="ov-note">Pass phone to switch teams mid-game</div>
+  <button class="ov-btn" id="begin-btn">Enter</button>
+</div>
+
+<!-- ── WIN ── -->
+<div class="overlay" id="win-overlay">
+  <div id="win-title"></div>
+  <div id="win-stats"></div>
+  <button class="ov-btn" onclick="startGame()">Again</button>
+</div>
+
+<!-- ── HUD ── -->
+<div id="hud">
+  <div class="f-block red"><div class="f-pip"></div><div class="f-count" id="rcount">10</div></div>
+  <div class="hud-mid"><div class="hud-name">Politics</div><div id="status"></div></div>
+  <div class="f-block blue"><div class="f-count" id="bcount">10</div><div class="f-pip"></div></div>
+</div>
+
+<canvas id="c"></canvas>
+
+<div id="bottom">
+  <button class="act-btn pol" id="pol-btn">⚖ Politician</button>
+  <button class="act-btn" id="team-btn" style="color:var(--red);">▶ RED</button>
+  <button class="act-btn rev" id="rev-btn">Revolution ⚡</button>
+</div>
+
+<script>
+'use strict';
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let CW, CH, DPR = 1;
+
+function sizeCanvas() {
+  DPR = Math.min(window.devicePixelRatio || 1, 3);
+  // Use visualViewport when available — accounts for iOS keyboard / address bar
+  const vv  = window.visualViewport;
+  const vw  = vv ? vv.width  : window.innerWidth;
+  const vh  = vv ? vv.height : window.innerHeight;
+  const hudH = document.getElementById('hud').offsetHeight;
+  const botH = document.getElementById('bottom').offsetHeight;
+  CW = Math.floor(vw);
+  CH = Math.max(200, Math.floor(vh) - hudH - botH);
+  canvas.width        = Math.round(CW * DPR);
+  canvas.height       = Math.round(CH * DPR);
+  canvas.style.width  = CW + 'px';
+  canvas.style.height = CH + 'px';
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(DPR, DPR);
+}
+
+window.addEventListener('resize', sizeCanvas);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', sizeCanvas);
+}
+
+// ── Constants ────────────────────────────────────────────────
+const MIN_SZ = 4, MAX_SZ = 70, SHRINK = 2, GROW = 2, BOUNCE = 0.82;
+
+// ── Team switch ──────────────────────────────────────────────
+let currentPlayer = 'red';
+function toggleTeam() {
+  currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+  const btn = document.getElementById('team-btn');
+  btn.textContent = `▶ ${currentPlayer.toUpperCase()}`;
+  btn.style.color = `var(--${currentPlayer})`;
+}
+
+const FILL   = { red:'#B8695E', blue:'#607EA0', white:'#B8AFA6', yellow:'#BF9E58', cyan:'#5A9FA4' };
+const STROKE = { red:'#9E5A50', blue:'#4E6888', white:'#A09790', yellow:'#A8893E', cyan:'#468A8F' };
+
+// ── Dot ──────────────────────────────────────────────────────
+class Dot {
+  constructor(x, y, color, type = 'normal') {
+    this.x = x; this.y = y;
+    this.color = color; this.type = type;
+    this.size = type === 'politician' ? 20 : type === 'revolutionary' ? 7 : 10;
+    const base = type === 'politician' ? 0.85 : type === 'revolutionary' ? 4.8 : 1.2 + Math.random() * 0.8;
+    const spd = base * (0.6 + Math.random() * 0.8);
+    const a = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(a) * spd; this.vy = Math.sin(a) * spd;
+  }
+
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.size = Math.max(MIN_SZ, Math.min(MAX_SZ, this.size));
+    const r = this.size;
+    if (this.x < r)    { this.x = r;    this.vx =  Math.abs(this.vx); }
+    if (this.x > CW-r) { this.x = CW-r; this.vx = -Math.abs(this.vx); }
+    if (this.y < r)    { this.y = r;    this.vy =  Math.abs(this.vy); }
+    if (this.y > CH-r) { this.y = CH-r; this.vy = -Math.abs(this.vy); }
+    const spd = Math.hypot(this.vx, this.vy);
+    const mx  = this.type === 'revolutionary' ? 9 : 5;
+    if (spd > mx   && spd > 0) { this.vx *= mx/spd;   this.vy *= mx/spd; }
+    if (spd < 0.28 && spd > 0) { this.vx *= 0.28/spd; this.vy *= 0.28/spd; }
+  }
+
+  draw(t) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle   = FILL[this.color]   || '#999';
+    ctx.fill();
+    ctx.strokeStyle = STROKE[this.color] || '#777';
+    ctx.lineWidth   = 0.75;
+    ctx.stroke();
+
+    if (this.type === 'politician') {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(t * 0.001);
+      for (let i = 0; i < 6; i++) {
+        const a0 = (i / 6) * Math.PI * 2;
+        ctx.beginPath(); ctx.arc(0, 0, this.size + 6, a0, a0 + 0.28);
+        ctx.strokeStyle = 'rgba(191,158,88,0.55)'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    if (this.type === 'revolutionary') {
+      const p = 0.5 + 0.5 * Math.sin(t * 0.012);
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.size + 4 + p * 3, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(90,159,164,${0.3 + p * 0.2})`; ctx.lineWidth = 1; ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  hits(px, py) { return (px-this.x)**2 + (py-this.y)**2 <= (this.size+10)**2; }
+}
+
+// ── State ────────────────────────────────────────────────────
+let dots = [], running = false, fx = [];
+
+function startGame() {
+  document.getElementById('win-overlay').style.display = 'none';
+  sizeCanvas();
+  dots = []; fx = [];
+  ctx.fillStyle = '#ECE7DF'; ctx.fillRect(0, 0, CW, CH);
+  const m = 22;
+  const place = (col, type = 'normal') =>
+    dots.push(new Dot(m + Math.random()*(CW-m*2), m + Math.random()*(CH-m*2), col, type));
+  for (let i=0;i<10;i++) place('red');
+  for (let i=0;i<10;i++) place('blue');
+  for (let i=0;i<10;i++) place('white');
+  running = true;
+}
+
+// ── Input ────────────────────────────────────────────────────
+function handleAction(clientX, clientY, player) {
+  if (!running) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (clientX - rect.left) * (CW / rect.width);
+  const my = (clientY - rect.top)  * (CH / rect.height);
+  for (let i = dots.length-1; i >= 0; i--) {
+    const d = dots[i]; if (!d.hits(mx, my)) continue;
+    if (d.color === 'cyan') {
+      d.color = player; d.type = 'normal'; addFX(mx, my, player, 26);
+    } else if (d.color === player) {
+      d.size = Math.min(MAX_SZ, d.size+3); addFX(mx, my, player, 14);
+    } else if (d.color === 'white') {
+      d.color = player; addFX(mx, my, player, 20);
+    } else {
+      d.color = 'white'; d.type = 'normal'; addFX(mx, my, 'white', 20);
+    }
+    return;
+  }
+}
+
+// Touch — primary input on mobile
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  for (const touch of e.changedTouches) {
+    handleAction(touch.clientX, touch.clientY, currentPlayer);
+  }
+}, { passive: false });
+
+// Mouse — fallback for desktop/testing
+canvas.addEventListener('click',       e => { e.preventDefault(); handleAction(e.clientX, e.clientY, currentPlayer); });
+canvas.addEventListener('contextmenu', e => { e.preventDefault(); handleAction(e.clientX, e.clientY, currentPlayer === 'red' ? 'blue' : 'red'); });
+
+document.getElementById('team-btn').addEventListener('click', toggleTeam);
+document.getElementById('team-btn').addEventListener('touchstart', e => { e.stopPropagation(); }, { passive: true });
+
+document.getElementById('pol-btn').addEventListener('click', () => {
+  if (!running) return;
+  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, 'yellow','politician'));
+});
+document.getElementById('rev-btn').addEventListener('click', () => {
+  if (!running) return;
+  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, 'cyan','revolutionary'));
+});
+
+// ── Click FX ─────────────────────────────────────────────────
+const FX_STROKE = { red:'184,105,94', blue:'96,126,160', white:'184,175,166', yellow:'191,158,88', cyan:'90,159,164' };
+function addFX(x,y,color,maxR) { fx.push({x,y,color,r:maxR*.15,maxR,a:.8}); }
+function drawFX() {
+  for (let i=fx.length-1;i>=0;i--) {
+    const f=fx[i];
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(${FX_STROKE[f.color]||'150,150,150'},${f.a})`;
+    ctx.lineWidth=1; ctx.stroke();
+    f.r=Math.min(f.maxR,f.r+2.4); f.a-=0.055;
+    if (f.a<=0) fx.splice(i,1);
+  }
+}
+
+// ── Collisions ───────────────────────────────────────────────
+function collide() {
+  for (let i=0;i<dots.length;i++) {
+    for (let j=i+1;j<dots.length;j++) {
+      const a=dots[i], b=dots[j];
+      const dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy, md=a.size+b.size;
+      if (d2>=md*md) continue;
+      const d=Math.sqrt(d2); if (d<.001) continue;
+      const nx=dx/d, ny=dy/d;
+      const sep=(md-d)*.52;
+      a.x-=nx*sep; a.y-=ny*sep; b.x+=nx*sep; b.y+=ny*sep;
+      const ma=a.size, mb=b.size, vn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+      if (vn<0) {
+        const imp=-(1+BOUNCE)*vn*ma*mb/(ma+mb);
+        a.vx-=(imp/ma)*nx; a.vy-=(imp/ma)*ny;
+        b.vx+=(imp/mb)*nx; b.vy+=(imp/mb)*ny;
+        applyConversion(a,b);
+      }
+    }
+  }
+}
+
+function neutralise(d) {
+  d.color='white'; if (d.type!=='normal') d.type='normal';
+  d.size=Math.max(MIN_SZ, d.size-SHRINK);
+}
+function directConvert(sm, toColor) {
+  sm.color=toColor; if (sm.type!=='normal') sm.type='normal';
+  sm.size=Math.max(MIN_SZ, sm.size-SHRINK);
+}
+function politicize(d, toColor) {
+  d.color=toColor; if (d.type!=='normal') d.type='normal';
+  d.size=Math.min(MAX_SZ, d.size+3);
+  const spd=Math.hypot(d.vx,d.vy)||0.1;
+  d.vx=d.vx/spd*Math.max(0.2,spd*0.45); d.vy=d.vy/spd*Math.max(0.2,spd*0.45);
+}
+function cyanize(d) {
+  d.color='cyan'; if (d.type!=='revolutionary') d.type='normal';
+  d.size=Math.max(MIN_SZ, d.size-SHRINK);
+  const spd=Math.hypot(d.vx,d.vy)||1, ns=Math.min(9,spd*1.6);
+  d.vx=d.vx/spd*ns; d.vy=d.vy/spd*ns;
+}
+
+function applyConversion(a, b) {
+  const aOG=a.type==='politician'||a.type==='revolutionary';
+  const bOG=b.type==='politician'||b.type==='revolutionary';
+
+  // ALL cyan: convert bigger non-cyan; grow self
+  if (a.color==='cyan' && b.color!=='cyan') {
+    if (b.size>a.size && !bOG) { cyanize(b); a.size=Math.min(MAX_SZ,a.size+GROW); if (a.type==='revolutionary'){a.vx*=0.8;a.vy*=0.8;} }
+    return;
+  }
+  if (b.color==='cyan' && a.color!=='cyan') {
+    if (a.size>b.size && !aOG) { cyanize(a); b.size=Math.min(MAX_SZ,b.size+GROW); if (b.type==='revolutionary'){b.vx*=0.8;b.vy*=0.8;} }
+    return;
+  }
+  if (a.color==='cyan' && b.color==='cyan') return;
+
+  // ALL yellow: convert smaller non-yellow; shrink self
+  // OG politician immune to bigger; children fall through to normal rules
+  if (a.color==='yellow' && b.color!=='yellow') {
+    if (b.size<a.size && !bOG) {
+      politicize(b,'yellow'); a.size=Math.max(MIN_SZ,a.size-SHRINK);
+      if (a.type==='politician'){const ps=Math.hypot(a.vx,a.vy)||0.1;a.vx=a.vx/ps*Math.min(5,ps*1.25);a.vy=a.vy/ps*Math.min(5,ps*1.25);}
+      return;
+    }
+    if (a.type==='politician') return;
+  }
+  if (b.color==='yellow' && a.color!=='yellow') {
+    if (a.size<b.size && !aOG) {
+      politicize(a,'yellow'); b.size=Math.max(MIN_SZ,b.size-SHRINK);
+      if (b.type==='politician'){const ps=Math.hypot(b.vx,b.vy)||0.1;b.vx=b.vx/ps*Math.min(5,ps*1.25);b.vy=b.vy/ps*Math.min(5,ps*1.25);}
+      return;
+    }
+    if (b.type==='politician') return;
+  }
+  if (a.color==='yellow' && b.color==='yellow') {
+    (a.size<=b.size?a:b).size=Math.min(MAX_SZ,Math.min(a.size,b.size)+GROW); return;
+  }
+
+  // Normal: red, blue, white
+  if (a.color==='white' && b.color==='white') return;
+  if (a.color===b.color) { (a.size<=b.size?a:b).size=Math.min(MAX_SZ,Math.min(a.size,b.size)+GROW); return; }
+  if (Math.abs(a.size-b.size)<0.5) return;
+
+  const lg=a.size>b.size?a:b, sm=lg===a?b:a;
+  if (sm.type==='politician'||sm.type==='revolutionary') return;
+  const lgRB=lg.color==='red'||lg.color==='blue';
+  if (lgRB&&(sm.color==='red'||sm.color==='blue')) { neutralise(sm); return; }
+  directConvert(sm, lg.color);
+}
+
+// ── Win ──────────────────────────────────────────────────────
+function checkWin() {
+  const total=dots.length; if (!total) return;
+  const rc=dots.filter(d=>d.color==='red').length;
+  const bc=dots.filter(d=>d.color==='blue').length;
+  document.getElementById('rcount').textContent=rc;
+  document.getElementById('bcount').textContent=bc;
+  if (rc===total){endGame('red',rc,bc);return;}
+  if (bc===total){endGame('blue',rc,bc);return;}
+  const statusEl=document.getElementById('status');
+  const leader=rc>bc?'red':bc>rc?'blue':null;
+  if (leader) {
+    statusEl.textContent=`${leader} ${Math.round((leader==='red'?rc:bc)/total*100)}%`;
+    statusEl.style.color=`var(--${leader})`;
+  } else { statusEl.textContent=''; statusEl.style.color='var(--dim)'; }
+}
+
+function endGame(winner,rc,bc) {
+  running=false;
+  const wt=document.getElementById('win-title');
+  wt.textContent=winner==='red'?'Red wins':'Blue wins'; wt.style.color=`var(--${winner})`;
+  document.getElementById('win-stats').textContent=`Red ${rc}  ·  Blue ${bc}`;
+  document.getElementById('win-overlay').style.display='flex';
+}
+
+// ── Loop ─────────────────────────────────────────────────────
+function loop(t) {
+  requestAnimationFrame(loop); if (!running) return;
+  ctx.fillStyle='#ECE7DF'; ctx.fillRect(0,0,CW,CH);
+  for (const d of dots) d.update();
+  collide();
+  for (const d of dots) d.draw(t);
+  drawFX(); checkWin();
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+document.getElementById('begin-btn').addEventListener('click', () => {
+  document.getElementById('start-overlay').style.display='none';
+  startGame();
+});
+// Also respond to tap on begin button
+document.getElementById('begin-btn').addEventListener('touchend', e => {
+  e.preventDefault();
+  document.getElementById('start-overlay').style.display='none';
+  startGame();
+}, { passive: false });
+
+sizeCanvas();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
