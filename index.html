@@ -38,6 +38,8 @@ body{
 .f-block.blue .f-count{color:var(--blue);}
 .hud-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
 .hud-name{font-size:13px;font-weight:400;letter-spacing:7px;text-transform:uppercase;color:var(--dim);}
+#dom-pct{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:6px 0 4px;font-variant-numeric:tabular-nums;}
+#pop-count{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:6px 0 4px;font-variant-numeric:tabular-nums;}
 #status{font-size:8px;font-weight:400;letter-spacing:2px;text-transform:uppercase;color:var(--dim);min-height:11px;transition:color .4s;}
 #c{display:block;cursor:crosshair;flex:1;min-height:0;touch-action:none;-webkit-tap-highlight-color:transparent;}
 #bottom{display:flex;flex-direction:column;border-top:1px solid var(--rule);flex-shrink:0;padding-bottom:var(--safe-b);}
@@ -104,6 +106,7 @@ body{
     <div class="f-block blue" id="b-btn"><div class="f-count" id="bcount">10</div><div class="f-pip"></div></div>
     <button id="pause-btn" title="Pause">⏸</button>
   </div>
+  <div id="dom-pct">0%</div>
   <div id="dom-bar">
     <div id="dom-fill"></div>
   </div>
@@ -113,7 +116,7 @@ body{
 
 <div class="bbar" id="birthbar">
   <span class="bb-label">Birthrate</span>
-  <input type="range" id="birth-slider" min="0" max="600" value="60" />
+  <input type="range" id="birth-slider" min="0" max="600" value="30" />
 </div>
 <div class="bbar" style="border-top:none;">
   <span class="bb-label">Lifespan</span>
@@ -131,16 +134,16 @@ body{
     <button class="act-btn" id="cit-btn">Citizen</button>
     <button class="act-btn" id="blue-btn" style="color:var(--blue);">Blue</button>
     <button class="act-btn" id="emp-btn">Tyrant</button>
-    <button class="act-btn" id="rev-btn">Revolution</button>
+    <button class="act-btn" id="rev-btn">Revolutionary</button>
   </div>
   <div class="btn-row">
-    <button class="act-btn" id="brain-btn">Brainwash</button>
     <button class="act-btn" id="plague-btn">Alarmist</button>
-    <button class="act-btn" id="elite-btn">Elites</button>
+    <button class="act-btn" id="disaster-btn">Disaster</button>
     <button class="act-btn" id="div-btn">Division</button>
+    <button class="act-btn" id="elite-btn">Elites</button>
     <button class="act-btn" id="unify-btn">Unity</button>
     <button class="act-btn" id="war-btn">War</button>
-    <button class="act-btn" id="disaster-btn">Disaster</button>
+    <button class="act-btn" id="brain-btn">Brainwash</button>
   </div>
 </div>
 
@@ -174,7 +177,7 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', size
 
 // ── Constants ────────────────────────────────────────────────
 const MIN_SZ=4, MAX_SZ=70, SHRINK=2, GROW=2, BOUNCE=0.82, EMP_SIZE=36;
-let birthRate=60, birthFrames=0, actionRate=1, paused=false, lifeSeconds=60, spawnSize=10;
+let birthRate=30, birthFrames=0, actionRate=1, paused=false, lifeSeconds=60, spawnSize=10;
 
 // ── Palettes ─────────────────────────────────────────────────
 const POL_PALETTE = ['#C4A24E'];
@@ -451,7 +454,7 @@ class Dot {
       stroke=`rgb(${Math.round(this._dispStroke[0])},${Math.round(this._dispStroke[1])},${Math.round(this._dispStroke[2])})`;
     }
     ctx.save();
-    const dsz = (this.type==='church') ? 30 : this.size;
+    const dsz = this.size;
     ctx.beginPath();
     ctx.arc(this.x,this.y,dsz,0,Math.PI*2);
     ctx.fillStyle=fill; ctx.fill();
@@ -482,7 +485,7 @@ class Dot {
       ctx.strokeStyle='rgba(58,55,53,0.35)';
       ctx.lineWidth=0.75;
       ctx.lineCap='round';
-      const cs = (this.type==='church') ? 30 : this.size;
+      const cs = this.size;
       ctx.beginPath(); ctx.arc(this.x, this.y, cs+3, 0, Math.PI*2); ctx.stroke();
       ctx.beginPath(); ctx.arc(this.x, this.y, cs+6, 0, Math.PI*2); ctx.stroke();
       ctx.beginPath(); ctx.arc(this.x, this.y, cs+9, 0, Math.PI*2); ctx.stroke();
@@ -673,7 +676,7 @@ document.getElementById('elite-btn').addEventListener('click',()=>{
     document.getElementById('elite-btn').classList.remove('active');
     return;
   }
-  const r = 45;
+  const r = 36;
   const cx = CW/2, cy = CH/2;
   const eliteId = Symbol('elite');
   for(const d of dots){
@@ -727,14 +730,28 @@ document.getElementById('church-btn').addEventListener('click',()=>{
   if(existing>=4) return;
   const inset=0;
   const corners=[[inset,inset],[CW-inset,inset],[CW-inset,CH-inset],[inset,CH-inset]];
-  // Try each corner in cycle order; skip ones occupied by a brainwasher or existing church
-  for(let attempt=0; attempt<4; attempt++){
-    const [cx,cy]=corners[churchCornerIdx%4];
-    churchCornerIdx++;
-    const occupied = dots.some(d=>!d.dead && d.type==='church' && Math.hypot(d.x-cx,d.y-cy)<60)
+  // Score each corner by how crowded it is (lower = clearer)
+  const scored = corners.map(([cx,cy]) => {
+    const blocked = dots.some(d=>!d.dead && d.type==='church' && Math.hypot(d.x-cx,d.y-cy)<60)
       || brainwashers.some(bw=>Math.hypot(bw.x-cx,bw.y-cy)<200)
       || dots.some(d=>!d.dead && d.type==='emperor' && d.size>30 && Math.hypot(d.x-cx,d.y-cy)<200);
-    if(!occupied){
+    let mass = 0;
+    for(const d of dots){
+      if(d.dead) continue;
+      const dx = d.x - cx, dy = d.y - cy;
+      const distSq = dx*dx + dy*dy;
+      if(distSq < 200*200){
+        mass += d.size * d.size;
+      }
+    }
+    return {cx, cy, blocked, mass};
+  });
+  // Sort by mass (clearest first), skipping blocked corners
+  const candidates = scored.filter(s => !s.blocked).sort((a,b) => a.mass - b.mass);
+  if(candidates.length === 0) return;
+  const {cx, cy} = candidates[0];
+  {
+    {
       // If an emperor is alive, new church and followers spawn in the emperor's colour
       const liveEmp = dots.find(d => !d.dead && d.type==='emperor');
       const spawnColor = liveEmp ? liveEmp.color : '#7A9468';
@@ -830,7 +847,8 @@ document.getElementById('disaster-btn').addEventListener('click',()=>{
 document.getElementById('plague-btn').addEventListener('click',()=>{
   if(!running) return;
   buttonsUsed.add('alarmism');
-  const candidates = dots.filter(d => !d.dead && !d._elite && !d._infected && !d._bwT);
+  const candidates = dots.filter(d => !d.dead && !d._elite && !d._infected && !d._bwT &&
+    d.type !== 'church' && d.type !== 'politician' && d.type !== 'emperor');
   if(candidates.length === 0) return;
   const patient = candidates[Math.floor(Math.random()*candidates.length)];
   patient._infected = true;
@@ -1266,7 +1284,7 @@ function applyConversion(a,b){
     // Follower: any non-flock contact sends them to the church leader (never converts)
     if(ch.type==='normal' && ch.faction==='church'){
       const isNonFlock = (ot.faction !== 'church') && (ot.type !== 'church');
-      if(isNonFlock && !ot._infected && ot.type!=='tyrant'){
+      if(isNonFlock && !ot._infected && ot.type!=='tyrant' && ot.type!=='politician' && ot.faction!=='politician'){
         const leader = dots.find(d => !d.dead && d.type==='church' && d.color===ch.color);
         if(leader){
           const tdx = leader.x - ot.x, tdy = leader.y - ot.y;
@@ -1803,6 +1821,7 @@ function loop(t){
   const colorMass={};
   let eliteMassTotal = 0;
   for(const d of dots){
+    if(d._atWar) continue; // soldiers are inert, not counted toward dominance
     colorMass[d.color]=(colorMass[d.color]||0)+d.size*d.size;
     if(d._elite) eliteMassTotal += d.size*d.size;
   }
@@ -1821,6 +1840,12 @@ function loop(t){
         const disp = getDisplay(best);
         fillEl.style.width = pct.toFixed(1)+'%';
         fillEl.style.backgroundColor = disp.fill;
+      }
+      const pctEl = document.getElementById('dom-pct');
+      if(pctEl){
+        const disp = getDisplay(best);
+        pctEl.textContent = Math.round(pct)+'%';
+        pctEl.style.color = disp.fill;
       }
     }
   }
@@ -1880,6 +1905,26 @@ function loop(t){
     for(const d of dots) if(d.type==='church' && d.crowned) churchCrowned[d.color]=true;
     for(const d of dots){
       if(d.faction==='church' && d.type==='normal') d.crowned = !!churchCrowned[d.color];
+    }
+  }
+  // Church size derived from follower count; dies if no followers
+  {
+    const MIN_CHURCH = 8;
+    const followersByColor = {};
+    for(const d of dots){
+      if(d.dead) continue;
+      if(d.faction==='church' && d.type==='normal'){
+        followersByColor[d.color] = (followersByColor[d.color]||0) + 1;
+      }
+    }
+    for(const d of dots){
+      if(d.dead||d.type!=='church') continue;
+      const fc = followersByColor[d.color] || 0;
+      if(fc === 0){
+        d.dead = true;
+        continue;
+      }
+      d.size = Math.max(MIN_CHURCH, Math.min(30, fc * 6));
     }
   }
   // Politician follower loyalty: sync follower colour to leader, clear loyalty if leader dead
@@ -2013,11 +2058,14 @@ function loop(t){
         !d._exEmperor &&
         (!d._veteranUntil || performance.now() >= d._veteranUntil) &&
         d.type==='normal' && !d._elite &&
-        d.age >= 15*60 && d.age <= 50*60);
+        d.age >= 15*60 && d.age <= 55*60);
       for(const d of draftable){
         d._atWar = true;
         d._warDir = [wdx, wdy];
         d.color = '#5C5048';
+        d.faction = null;
+        d._polId = null;
+        d.crowned = false;
         d.vx = wdx * 4;
         d.vy = wdy * 4;
       }
