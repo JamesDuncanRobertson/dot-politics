@@ -80,12 +80,6 @@ body{
 #win-label{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;}
 #win-title{font-size:clamp(28px,7vw,64px);font-weight:300;letter-spacing:clamp(4px,2vw,14px);text-transform:uppercase;line-height:1.2;margin-bottom:10px;text-align:center;}
 #win-stats{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:var(--dim);margin-bottom:48px;}
-.btn-label-short{display:none;}
-@media (max-width: 600px){
-  .btn-label-long{display:none;}
-  .btn-label-short{display:inline;}
-  .act-btn{font-size:9px;letter-spacing:1px;}
-}
 </style>
 </head>
 <body>
@@ -135,22 +129,22 @@ body{
 </div>
 <div id="bottom">
   <div class="btn-row">
-    <button class="act-btn" id="pol-btn"><span class="btn-label-long">Politician</span><span class="btn-label-short">Poli</span></button>
-    <button class="act-btn" id="church-btn"><span class="btn-label-long">Church</span><span class="btn-label-short">Chur</span></button>
-    <button class="act-btn" id="red-btn" style="color:var(--red);"><span class="btn-label-long">Red</span><span class="btn-label-short">Red</span></button>
-    <button class="act-btn" id="cit-btn"><span class="btn-label-long">Citizen</span><span class="btn-label-short">Citi</span></button>
-    <button class="act-btn" id="blue-btn" style="color:var(--blue);"><span class="btn-label-long">Blue</span><span class="btn-label-short">Blue</span></button>
-    <button class="act-btn" id="emp-btn"><span class="btn-label-long">Tyrant</span><span class="btn-label-short">Tyra</span></button>
-    <button class="act-btn" id="rev-btn"><span class="btn-label-long">Revolution</span><span class="btn-label-short">Revo</span></button>
+    <button class="act-btn" id="pol-btn">Politician</button>
+    <button class="act-btn" id="church-btn">Church</button>
+    <button class="act-btn" id="red-btn" style="color:var(--red);">Red</button>
+    <button class="act-btn" id="cit-btn">Citizen</button>
+    <button class="act-btn" id="blue-btn" style="color:var(--blue);">Blue</button>
+    <button class="act-btn" id="emp-btn">Tyrant</button>
+    <button class="act-btn" id="rev-btn">Revolution</button>
   </div>
   <div class="btn-row">
-    <button class="act-btn" id="plague-btn"><span class="btn-label-long">Alarmist</span><span class="btn-label-short">Alrm</span></button>
-    <button class="act-btn" id="disaster-btn"><span class="btn-label-long">Disaster</span><span class="btn-label-short">Disa</span></button>
-    <button class="act-btn" id="div-btn"><span class="btn-label-long">Division</span><span class="btn-label-short">Divi</span></button>
-    <button class="act-btn" id="elite-btn"><span class="btn-label-long">Elites</span><span class="btn-label-short">Elit</span></button>
-    <button class="act-btn" id="unify-btn"><span class="btn-label-long">Unity</span><span class="btn-label-short">Unit</span></button>
-    <button class="act-btn" id="war-btn"><span class="btn-label-long">War</span><span class="btn-label-short">War</span></button>
-    <button class="act-btn" id="brain-btn"><span class="btn-label-long">Brainwash</span><span class="btn-label-short">Brwa</span></button>
+    <button class="act-btn" id="plague-btn">Alarmist</button>
+    <button class="act-btn" id="disaster-btn">Disaster</button>
+    <button class="act-btn" id="div-btn">Division</button>
+    <button class="act-btn" id="elite-btn">Elite</button>
+    <button class="act-btn" id="unify-btn">Unity</button>
+    <button class="act-btn" id="war-btn">War</button>
+    <button class="act-btn" id="brain-btn">Brainwash</button>
   </div>
 </div>
 
@@ -540,6 +534,7 @@ function startGame() {
   document.getElementById('red-btn').classList.remove('active');
   document.getElementById('blue-btn').classList.remove('active');
   buttonsUsed = new Set();
+  pendingWin = null;
   document.getElementById('brain-btn')?.classList.remove('active');
   document.getElementById('div-btn').classList.remove('active');
   document.getElementById('elite-btn')?.classList.remove('active');
@@ -683,7 +678,7 @@ document.getElementById('elite-btn').addEventListener('click',()=>{
     document.getElementById('elite-btn').classList.remove('active');
     return;
   }
-  const r = 36;
+  const r = 30;
   const cx = CW/2, cy = CH/2;
   const eliteId = Symbol('elite');
   for(const d of dots){
@@ -1647,38 +1642,34 @@ function checkWin(){
   if(total>=5){
     if(dots.every(d=>d.faction==='church'||d.type==='church')){endGame('Theocracy. Great.','#7A9468',`${total} faithful`);return;}
 
-    // Elite-ring win: when elite ring exists and elite-black is mass-dominant AND all outsiders are small whites
-    if(elites.length > 0){
-      const massByColor = {};
-      for(const d of dots){ massByColor[d.color] = (massByColor[d.color]||0) + d.size*d.size; }
-      let topColor=null, topMass=-1, totalMass=0;
-      for(const c in massByColor){ totalMass+=massByColor[c]; if(massByColor[c]>topMass){topMass=massByColor[c]; topColor=c;} }
-      if(topColor==='#28231E' && topMass/totalMass > 0.8){
-        let allWhitesOutside = true;
-        let outsiderCount = 0;
-        let churchPresent = false;
-        for(const d of dots){
-          if(d.dead) continue;
-          if(d._elite || isEliteInRing(d)) continue;
-          if(d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned)) continue;
-          if(d.type==='church'){ churchPresent = true; continue; }
-          if(d.faction==='church') continue; // church followers aren't real outsiders
-          outsiderCount++;
-          if(d.color !== 'white'){ allWhitesOutside = false; break; }
-        }
-        if(allWhitesOutside && outsiderCount > 0){
-          if(churchPresent){
-            // Kill churches dramatically before the win fires
-            for(const d of dots){
-              if(!d.dead && (d.type==='church' || d.faction==='church')) d.dead = true;
+      // Elite win: 6+ elites inside the ring AND 10+ whites AND all outsiders white
+      if(elites.length > 0){
+        const eliteInRingCount = dots.filter(d => !d.dead && d._elite && isEliteInRing(d)).length;
+        if(eliteInRingCount >= 6){
+          let allWhitesOutside = true;
+          let whiteCount = 0;
+          let churchPresent = false;
+          for(const d of dots){
+            if(d.dead) continue;
+            if(d._elite || isEliteInRing(d)) continue;
+            if(d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned)) continue;
+            if(d.type==='church'){ churchPresent = true; continue; }
+            if(d.faction==='church') continue;
+            if(d.color !== 'white'){ allWhitesOutside = false; break; }
+            whiteCount++;
+          }
+          if(allWhitesOutside && whiteCount >= 10){
+            if(churchPresent){
+              for(const d of dots){
+                if(!d.dead && (d.type==='church' || d.faction==='church')) d.dead = true;
+              }
+            } else {
+              endGame('Elites took over','#28231E',`Total ${total}`);
+              return;
             }
-          } else {
-            endGame('Elites took over','#28231E',`Total ${total}`);
-            return;
           }
         }
       }
-    }
 
     // Screen dominance win: any colour covering >=99% of canvas area triggers the washout ending
     const screenArea=CW*CH;
@@ -1756,8 +1747,21 @@ function checkWin(){
   }
 }
 
+let pendingWin = null; // {title, color, stats, frames}
+
+let _endGameCalledThisFrame = false;
 function endGame(title,color,stats){
+  _endGameCalledThisFrame = true;
+  // Defer the actual end by 120 frames so the player sees the cause
+  if(pendingWin && pendingWin.title === title && pendingWin.color === color){
+    return; // already pending the same outcome — let it tick
+  }
+  pendingWin = { title, color, stats, frames: 0 };
+}
+
+function commitEndGame(title,color,stats){
   running=false;
+  pendingWin = null;
   // Secret achievement: won via elite black washout, using ALL of Elite/Disaster/Brainwash/Division and ONLY those
   const required = ['elite','disaster','brain','div'];
   const usedAllRequired = required.every(b => buttonsUsed.has(b));
@@ -1797,7 +1801,7 @@ function loop(t){
     }
     return;
   }
-  if(birthRate>0){
+  if(birthRate>0 && !pendingWin){
     birthFrames+=actionRate;
     const interval=3600/birthRate;
     if(birthFrames>=interval){
@@ -2312,7 +2316,17 @@ function loop(t){
     ctx.setLineDash([]);
   }
   ctx.lineCap='butt';
+  _endGameCalledThisFrame = false;
   drawFX();checkWin();
+  if(!_endGameCalledThisFrame && pendingWin){
+    pendingWin = null; // conditions no longer met, cancel pending
+  }
+  if(pendingWin){
+    pendingWin.frames++;
+    if(pendingWin.frames >= 120){
+      commitEndGame(pendingWin.title, pendingWin.color, pendingWin.stats);
+    }
+  }
 }
 
 // ── Boot ─────────────────────────────────────────────────────
