@@ -24,7 +24,7 @@ body{
   padding-top:var(--safe-t);
 }
 #hud{display:flex;flex-direction:column;border-bottom:1px solid var(--rule);flex-shrink:0;}
-.hud-top{position:relative;height:52px;display:flex;align-items:center;padding:0 20px;}
+.hud-top{position:relative;height:28px;display:flex;align-items:center;padding:0 20px;}
 #dom-bar{height:14px;position:relative;background:transparent;border-top:1px solid var(--rule);overflow:hidden;display:flex;align-items:center;justify-content:center;}
 #dom-fill{height:6px;background:var(--text);transition:width 0.3s ease,background-color 0.3s ease;width:0%;border-radius:3px;}
 .f-block{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;padding:6px 4px;width:80px;}
@@ -38,7 +38,9 @@ body{
 .f-block.blue .f-count{color:var(--blue);}
 .hud-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
 .hud-name{font-size:13px;font-weight:400;letter-spacing:7px;text-transform:uppercase;color:var(--dim);}
-#dom-pct{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:6px 0 4px;font-variant-numeric:tabular-nums;}
+#dom-pct{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:2px 0 2px;font-variant-numeric:tabular-nums;position:relative;}
+#dom-pct .pct-num{display:inline-block;}
+#dom-pct .pct-sign{position:absolute;margin-left:2px;}
 #pop-count{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:6px 0 4px;font-variant-numeric:tabular-nums;}
 #status{font-size:8px;font-weight:400;letter-spacing:2px;text-transform:uppercase;color:var(--dim);min-height:11px;transition:color .4s;}
 #c{display:block;cursor:crosshair;flex:1;min-height:0;touch-action:none;-webkit-tap-highlight-color:transparent;}
@@ -61,10 +63,9 @@ body{
 .act-btn:last-child{border-right:none;}
 .act-btn:active{opacity:.6;}
 .act-btn.active{color:var(--text);background:rgba(58,55,53,0.06);}
-#reset-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:14px;line-height:1;padding:0 4px;-webkit-tap-highlight-color:transparent;margin-left:5px;}
+#reset-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:13px;line-height:1;padding:6px 8px;-webkit-tap-highlight-color:transparent;}
 #reset-btn:hover{color:var(--text);}
-#pause-btn,#reset-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:13px;line-height:1;padding:6px 8px;-webkit-tap-highlight-color:transparent;}
-#reset-btn{font-size:16px;}
+#pause-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:13px;line-height:1;padding:6px 8px;-webkit-tap-highlight-color:transparent;}
 #pause-btn:hover,#reset-btn:hover{color:var(--text);}
 .overlay{
   position:fixed;inset:0;z-index:200;background:rgba(236,231,223,0.97);
@@ -129,12 +130,12 @@ body{
 <div id="bottom">
   <div class="btn-row">
     <button class="act-btn" id="pol-btn">Politician</button>
-    <button class="act-btn" id="church-btn">Religion</button>
+    <button class="act-btn" id="church-btn">Church</button>
     <button class="act-btn" id="red-btn" style="color:var(--red);">Red</button>
     <button class="act-btn" id="cit-btn">Citizen</button>
     <button class="act-btn" id="blue-btn" style="color:var(--blue);">Blue</button>
     <button class="act-btn" id="emp-btn">Tyrant</button>
-    <button class="act-btn" id="rev-btn">Revolutionary</button>
+    <button class="act-btn" id="rev-btn">Revolution</button>
   </div>
   <div class="btn-row">
     <button class="act-btn" id="plague-btn">Alarmist</button>
@@ -391,7 +392,7 @@ class Dot {
     }
     // Emperor followers that originated from a revolutionary wear off to neutral
     if(this.type==='normal' && this.faction==='emperor' && this._revOrigin){
-      if(Math.random() < 0.005){ // ~26%/sec at 60fps
+      if(Math.random() < 0.00289){ // ~4s half-life
         this.faction=null; this.color='white'; this.crowned=false;
         this._wasRev = true; this._revOrigin = false;
       }
@@ -1699,7 +1700,7 @@ function checkWin(){
       const hasEmperor=dots.some(d=>d.type==='emperor'&&d.color===domColor);
       const hasPolLeader=dots.some(d=>d.type==='politician'&&d.color===domColor);
       const hasRevLeader=dots.some(d=>d.type==='revolutionary'&&d.color===domColor);
-      if(hasTyrant||hasEmperor){endGame('The Emperor reigns',domColor,`Total ${total}`);return;}
+      if(hasTyrant||hasEmperor){endGame('The Emperor reigns supreme',domColor,`Total ${total}`);return;}
       if(hasPolLeader){endGame('Another party took over',domColor,`Total ${total}`);return;}
       if(hasRevLeader){endGame('Revolution swept the land',domColor,`Total ${total}`);return;}
       // Fallback: leaderless colour win — name the colour
@@ -1726,11 +1727,11 @@ function checkWin(){
       const hasEmperor=dots.some(d=>d.type==='emperor');
       const hasPolLeader=dots.some(d=>d.type==='politician');
       const hasRevLeader=dots.some(d=>d.type==='revolutionary');
-      if(hasTyrant||hasEmperor){endGame('The Emperor reigns',first,`Total ${total}`);return;}
+      if(hasTyrant||hasEmperor){endGame('The Emperor reigns supreme',first,`Total ${total}`);return;}
       if(hasPolLeader){endGame('Another party took over',first,`Total ${total}`);return;}
       if(hasRevLeader){endGame('Revolution swept the land',first,`Total ${total}`);return;}
       const f=dots[0].faction;
-      if(f==='emperor'){endGame('The Emperor reigns',first,`Total ${total}`);return;}
+      if(f==='emperor'){endGame('The Emperor reigns supreme',first,`Total ${total}`);return;}
       if(f==='revolutionary'){endGame('Revolution swept the land',first,`Total ${total}`);return;}
       if(f==='politician'){endGame('Another party took over',first,`Total ${total}`);return;}
     }
@@ -1844,7 +1845,7 @@ function loop(t){
       const pctEl = document.getElementById('dom-pct');
       if(pctEl){
         const disp = getDisplay(best);
-        pctEl.textContent = Math.round(pct)+'%';
+        pctEl.innerHTML = '<span class="pct-num">'+Math.round(pct)+'</span><span class="pct-sign">%</span>';
         pctEl.style.color = disp.fill;
       }
     }
@@ -1913,7 +1914,9 @@ function loop(t){
     const followersByColor = {};
     for(const d of dots){
       if(d.dead) continue;
-      if(d.faction==='church' && d.type==='normal'){
+      if(d.type !== 'normal') continue;
+      // Regular church followers, or empire-converted church followers
+      if(d.faction === 'church' || d._preEmpFaction === 'church'){
         followersByColor[d.color] = (followersByColor[d.color]||0) + 1;
       }
     }
