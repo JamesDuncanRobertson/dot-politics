@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>POLITICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#ECE7DF; --red:#B8695E; --blue:#607EA0;
+  --text:#28231E; --mid:#6A6159; --dim:#A89E96;
+  --rule:rgba(0,0,0,0.07); --font:'Jost',system-ui,sans-serif;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{position:fixed;width:100%;height:100%;overflow:hidden;}
+body{
+  position:fixed;width:100%;height:100%;overflow:hidden;
+  background:var(--bg);font-family:var(--font);
+  user-select:none;-webkit-user-select:none;
+  display:flex;flex-direction:column;color:var(--text);
+  padding-top:var(--safe-t);
+}
+#hud{display:flex;flex-direction:column;border-bottom:1px solid var(--rule);flex-shrink:0;}
+.hud-top{position:relative;height:28px;display:flex;align-items:center;padding:0 20px;}
+#dom-bar{height:14px;position:relative;background:transparent;border-top:1px solid var(--rule);overflow:hidden;display:flex;align-items:center;justify-content:center;}
+#dom-fill{height:6px;background:var(--text);transition:width 0.3s ease,background-color 0.3s ease;width:0%;border-radius:3px;}
+.f-block{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;padding:6px 4px;width:80px;}
+.f-block.red{justify-content:flex-start;}
+.f-block.blue{justify-content:flex-end;}
+.f-pip{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.f-block.red .f-pip{background:var(--red);}
+.f-block.blue .f-pip{background:var(--blue);}
+.f-count{font-size:22px;font-weight:400;letter-spacing:-0.3px;}
+.f-block.red .f-count{color:var(--red);}
+.f-block.blue .f-count{color:var(--blue);}
+.hud-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.hud-name{font-size:13px;font-weight:400;letter-spacing:7px;text-transform:uppercase;color:var(--dim);}
+#dom-pct{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:2px 0 2px;font-variant-numeric:tabular-nums;position:relative;}
+#dom-pct .pct-num{display:inline-block;}
+#dom-pct .pct-sign{position:absolute;margin-left:2px;}
+#pop-count{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:6px 0 4px;font-variant-numeric:tabular-nums;}
+#status{font-size:8px;font-weight:400;letter-spacing:2px;text-transform:uppercase;color:var(--dim);min-height:11px;transition:color .4s;}
+#c{display:block;cursor:crosshair;flex:1;min-height:0;touch-action:none;-webkit-tap-highlight-color:transparent;}
+#bottom{display:flex;flex-direction:column;border-top:1px solid var(--rule);flex-shrink:0;padding-bottom:var(--safe-b);}
+.btn-row{height:44px;display:flex;border-bottom:1px solid var(--rule);}
+.btn-row:last-child{border-bottom:none;}
+#birthbar, .bbar{display:flex;align-items:center;gap:12px;padding:6px 18px;border-top:1px solid var(--rule);flex-shrink:0;}
+.bb-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);font-weight:400;min-width:50px;}
+#birth-slider, #action-slider, #life-slider{flex:1;-webkit-appearance:none;appearance:none;background:transparent;height:18px;cursor:pointer;}
+#birth-slider::-webkit-slider-runnable-track, #action-slider::-webkit-slider-runnable-track, #life-slider::-webkit-slider-runnable-track{height:1px;background:var(--mid);}
+#birth-slider::-webkit-slider-thumb, #action-slider::-webkit-slider-thumb, #life-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:var(--text);margin-top:-6px;cursor:pointer;}
+#birth-slider::-moz-range-track, #action-slider::-moz-range-track, #life-slider::-moz-range-track{height:1px;background:var(--mid);}
+#birth-slider::-moz-range-thumb, #action-slider::-moz-range-thumb, #life-slider::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--text);cursor:pointer;border:none;}
+.act-btn{
+  flex:1;background:transparent;border:none;border-right:1px solid var(--rule);
+  font-family:var(--font);font-size:9px;font-weight:500;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;gap:6px;
+  -webkit-tap-highlight-color:transparent;transition:color .15s,background .15s;
+}
+.act-btn:last-child{border-right:none;}
+.act-btn:active{opacity:.6;}
+.act-btn.active{color:var(--text);background:rgba(58,55,53,0.06);}
+#reset-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:13px;line-height:1;padding:6px 8px;-webkit-tap-highlight-color:transparent;}
+#reset-btn:hover{color:var(--text);}
+#pause-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:13px;line-height:1;padding:6px 8px;-webkit-tap-highlight-color:transparent;}
+#pause-btn:hover,#reset-btn:hover{color:var(--text);}
+.overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(236,231,223,0.97);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 32px;padding-top:calc(24px + var(--safe-t));
+}
+.ov-title{font-size:clamp(40px,12vw,100px);font-weight:300;letter-spacing:clamp(8px,3vw,22px);text-transform:uppercase;color:var(--text);line-height:1;margin-bottom:18px;text-align:center;text-indent:clamp(8px,3vw,22px);}
+.ov-sub{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--mid);margin-bottom:48px;text-align:center;}
+.ov-btn{background:none;border:1px solid rgba(0,0,0,0.15);color:var(--mid);font-family:var(--font);font-size:10px;font-weight:400;letter-spacing:5px;text-transform:uppercase;padding:14px 52px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.ov-btn:active{background:rgba(0,0,0,0.04);}
+#win-overlay{display:none;}
+#win-label{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;}
+#win-title{font-size:clamp(28px,7vw,64px);font-weight:300;letter-spacing:clamp(4px,2vw,14px);text-transform:uppercase;line-height:1.2;margin-bottom:10px;text-align:center;}
+#win-stats{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:var(--dim);margin-bottom:48px;}
+.btn-label-short{display:none;}
+@media (max-width: 600px){
+  .btn-label-long{display:none;}
+  .btn-label-short{display:inline;}
+  .act-btn{font-size:9px;letter-spacing:1px;}
+}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="start-overlay">
+  <div class="ov-title">Politics</div>
+  <div class="ov-sub">Large and in charge</div>
+  <button class="ov-btn" id="begin-btn">Enter</button>
+</div>
+
+<div class="overlay" id="win-overlay">
+  <div id="win-label">Result:</div>
+  <div id="win-title"></div>
+  <div id="win-stats"></div>
+  <button class="ov-btn" onclick="startGame()">Again</button>
+</div>
+
+<div id="hud">
+  <div class="hud-top">
+    <button id="reset-btn" title="Reset">↻</button>
+    <div class="f-block red" id="r-btn"><div class="f-pip"></div><div class="f-count" id="rcount">10</div></div>
+    <div class="hud-mid">
+      <div class="hud-name">Politics</div>
+    </div>
+    <div class="f-block blue" id="b-btn"><div class="f-count" id="bcount">10</div><div class="f-pip"></div></div>
+    <button id="pause-btn" title="Pause">⏸</button>
+  </div>
+  <div id="dom-pct">0%</div>
+  <div id="dom-bar">
+    <div id="dom-fill"></div>
+  </div>
+</div>
+
+<canvas id="c"></canvas>
+
+<div class="bbar" id="birthbar">
+  <span class="bb-label">Birthrate</span>
+  <input type="range" id="birth-slider" min="0" max="600" value="30" />
+</div>
+<div class="bbar" style="border-top:none;">
+  <span class="bb-label">Lifespan</span>
+  <input type="range" id="life-slider" min="10" max="110" step="5" value="60" />
+</div>
+<div class="bbar" style="border-top:none;">
+  <span class="bb-label">Activity</span>
+  <input type="range" id="action-slider" min="0.25" max="3" step="0.05" value="1" />
+</div>
+<div id="bottom">
+  <div class="btn-row">
+    <button class="act-btn" id="pol-btn"><span class="btn-label-long">Politician</span><span class="btn-label-short">Poli</span></button>
+    <button class="act-btn" id="church-btn"><span class="btn-label-long">Church</span><span class="btn-label-short">Chur</span></button>
+    <button class="act-btn" id="red-btn" style="color:var(--red);"><span class="btn-label-long">Red</span><span class="btn-label-short">Red</span></button>
+    <button class="act-btn" id="cit-btn"><span class="btn-label-long">Citizen</span><span class="btn-label-short">Citi</span></button>
+    <button class="act-btn" id="blue-btn" style="color:var(--blue);"><span class="btn-label-long">Blue</span><span class="btn-label-short">Blue</span></button>
+    <button class="act-btn" id="emp-btn"><span class="btn-label-long">Tyrant</span><span class="btn-label-short">Tyra</span></button>
+    <button class="act-btn" id="rev-btn"><span class="btn-label-long">Revolution</span><span class="btn-label-short">Revo</span></button>
+  </div>
+  <div class="btn-row">
+    <button class="act-btn" id="plague-btn"><span class="btn-label-long">Alarmist</span><span class="btn-label-short">Alrm</span></button>
+    <button class="act-btn" id="disaster-btn"><span class="btn-label-long">Disaster</span><span class="btn-label-short">Disa</span></button>
+    <button class="act-btn" id="div-btn"><span class="btn-label-long">Division</span><span class="btn-label-short">Divi</span></button>
+    <button class="act-btn" id="elite-btn"><span class="btn-label-long">Elites</span><span class="btn-label-short">Elit</span></button>
+    <button class="act-btn" id="unify-btn"><span class="btn-label-long">Unity</span><span class="btn-label-short">Unit</span></button>
+    <button class="act-btn" id="war-btn"><span class="btn-label-long">War</span><span class="btn-label-short">War</span></button>
+    <button class="act-btn" id="brain-btn"><span class="btn-label-long">Brainwash</span><span class="btn-label-short">Brwa</span></button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let CW, CH, DPR = 1;
+
+function sizeCanvas() {
+  DPR = Math.min(window.devicePixelRatio || 1, 3);
+  const vv  = window.visualViewport;
+  const vw  = vv ? vv.width  : window.innerWidth;
+  const vh  = vv ? vv.height : window.innerHeight;
+  const hudH = document.getElementById('hud').offsetHeight;
+  const botH = document.getElementById('bottom').offsetHeight;
+  let barH = 0;
+  for(const el of document.querySelectorAll('.bbar')) barH += el.offsetHeight;
+  CW = Math.floor(vw);
+  CH = Math.max(200, Math.floor(vh) - hudH - botH - barH);
+  canvas.width        = Math.round(CW * DPR);
+  canvas.height       = Math.round(CH * DPR);
+  canvas.style.width  = CW + 'px';
+  canvas.style.height = CH + 'px';
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(DPR, DPR);
+}
+window.addEventListener('resize', sizeCanvas);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeCanvas);
+
+// ── Constants ────────────────────────────────────────────────
+const MIN_SZ=4, MAX_SZ=70, SHRINK=2, GROW=2, BOUNCE=0.82, EMP_SIZE=36;
+let birthRate=30, birthFrames=0, actionRate=1, paused=false, lifeSeconds=60, spawnSize=10;
+
+// ── Palettes ─────────────────────────────────────────────────
+const POL_PALETTE = ['#C4A24E'];
+const REV_PALETTE = ['#5A9FA4','#7A9ABF','#9A7ABF','#7ABF9A','#BF9A7A','#9ABF7A'];
+const EMP_PALETTE = ['#7A5E8A','#8A5E6A','#5E7A66','#5E6A8A','#8A6E5E','#6A6E78'];
+let polIdx = 0, revIdx = 0, empIdx = 0, churchCornerIdx = 0;
+
+const FILL   = { red:'#B8695E', blue:'#607EA0', white:'#B8AFA6' };
+const STROKE = { red:'#9E5A50', blue:'#4E6888', white:'#A09790' };
+
+function darkenHex(hex, amt=0.13) {
+  const n=parseInt(hex.slice(1),16);
+  const r=Math.max(0,(n>>16)-Math.round(amt*255));
+  const g=Math.max(0,((n>>8)&0xff)-Math.round(amt*255));
+  const b=Math.max(0,(n&0xff)-Math.round(amt*255));
+  return `rgb(${r},${g},${b})`;
+}
+
+function parseRGB(s){
+  if(s.startsWith('#')){
+    const n=parseInt(s.slice(1),16);
+    return [(n>>16)&0xff,(n>>8)&0xff,n&0xff];
+  }
+  const m=s.match(/rgb\((\d+),(\d+),(\d+)\)/);
+  if(m) return [+m[1],+m[2],+m[3]];
+  return [180,180,180];
+}
+
+function getDisplay(color) {
+  if (color.startsWith('#')) return { fill: color, stroke: darkenHex(color) };
+  return { fill: FILL[color]||'#999', stroke: STROKE[color]||'#777' };
+}
+
+let currentPlayer = 'red';
+function setPlayer(p){
+  currentPlayer = p;
+}
+
+// ── Dot ──────────────────────────────────────────────────────
+class Dot {
+  constructor(x, y, color, type='normal', faction=null) {
+    this.x=x; this.y=y;
+    this.color=color;
+    this.type=type;
+    this.faction=faction;
+    this.size = type==='politician' ? 11 : type==='revolutionary' ? 7 : type==='emperor' ? EMP_SIZE : type==='church' ? 30 : spawnSize;
+    const base = type==='politician' ? 0.85 : type==='revolutionary' ? 4.8 : type==='emperor' ? 0.5 : type==='tyrant' ? 1.7 : type==='church' ? 0 : 1.2+Math.random()*0.8;
+    const spd = base*(0.6+Math.random()*0.8);
+    const a = Math.random()*Math.PI*2;
+    this.vx=Math.cos(a)*spd; this.vy=Math.sin(a)*spd;
+    this.crowned=false; this._crownFrames=0;
+    // Per-dot lifespan variance factor 0.83–1.17. Actual lifespan = baseSeconds × (size/10) × variance, computed each frame.
+    this.age = 0;
+    this._lifeVariance = 0.83 + Math.random()*0.34;
+    // Display colour eases toward logical colour to mask flicker
+    const dc=getDisplay(this.color);
+    this._dispFill=parseRGB(dc.fill);
+    this._dispStroke=parseRGB(dc.stroke);
+  }
+
+  ascendToEmperor(){
+    const oldFaction=this.faction;
+    this.type='emperor'; this.faction='emperor';
+    this.ascendedFrom=oldFaction;
+    const sp=Math.hypot(this.vx,this.vy)||0.1;
+    const base=0.5*(0.6+Math.random()*0.8);
+    this.vx=this.vx/sp*base; this.vy=this.vy/sp*base;
+    const empColor = this.color;
+    for(const o of dots){
+      if(o===this||o.dead) continue;
+      // Migrate same-colour same-old-faction followers to emperor faction (existing rule)
+      if(o.color===this.color && o.faction===oldFaction && o.type==='normal'){
+        o.faction='emperor';
+        if(oldFaction==='revolutionary') o._revOrigin = true;
+        const sp2=Math.hypot(o.vx,o.vy)||0.1;
+        o.vx=o.vx/sp2*(sp2*0.4); o.vy=o.vy/sp2*(sp2*0.4);
+        continue;
+      }
+      // Politicians: recolour to emperor; keep type/faction
+      if(o.type==='politician'){
+        if(o._preEmpColor===undefined) o._preEmpColor = o.color;
+        o.color = empColor;
+        continue;
+      }
+      if(o.faction==='politician'){
+        if(o._preEmpColor===undefined){ o._preEmpColor = o.color; o._preEmpFaction = o.faction; }
+        o.color = empColor;
+        continue;
+      }
+      // Church building: recolour, keep type/faction
+      if(o.type==='church'){
+        if(o._preEmpColor===undefined) o._preEmpColor = o.color;
+        o.color = empColor;
+        continue;
+      }
+      // Church follower: recolour AND defect to emperor faction
+      if(o.type==='normal' && o.faction==='church'){
+        if(o._preEmpColor===undefined){ o._preEmpColor = o.color; o._preEmpFaction = 'church'; }
+        o.color = empColor;
+        o.faction = 'emperor';
+        continue;
+      }
+      // Elite: recolour, keep elite faction/flag
+      if(o._elite || o.faction==='elite'){
+        if(o._preEmpColor===undefined) o._preEmpColor = o.color;
+        o.color = empColor;
+        continue;
+      }
+    }
+  }
+
+  ascendToTyrant(){
+    this.type='tyrant'; this.faction=null;
+    this.ascendedFrom='revolutionary';
+    for(const o of dots){
+      if(o===this||o.dead) continue;
+      if(o.color===this.color && o.faction==='revolutionary' && o.type==='normal'){
+        o.faction='emperor';
+      }
+    }
+  }
+
+  update() {
+    if(this._inChurch){ this.vx=0; this.vy=0; return; }
+    if(this._warOff){ return; }
+    if(this._churchTouchFrames > 0) this._churchTouchFrames = Math.max(0, this._churchTouchFrames - 1);
+    // Plague: infected dots die after 8 seconds (480 frames)
+    if(this._infected){
+      this._infectedFrames = (this._infectedFrames||0) + 1;
+      if(this._panicked){
+        // Panicked: keep speed high
+        const sp = Math.hypot(this.vx,this.vy)||0.1;
+        const target = 4;
+        const newSp = sp + (target - sp)*0.1;
+        this.vx = this.vx/sp * newSp;
+        this.vy = this.vy/sp * newSp;
+      } else {
+        // Calmed: shrink & slow quickly
+        this.vx *= 0.85;
+        this.vy *= 0.85;
+        if(this.size>MIN_SZ) this.size = Math.max(MIN_SZ, this.size - 0.01);
+      }
+    }
+    // Natural lifespan: dots age each frame; lifespan scales with size. Churches and crowned revolutionaries (= emperors) exempt.
+    if(this.type!=='church' && !(this.type==='revolutionary' && this.crowned)){
+      this.age++;
+      // Elites have a separate fixed lifespan set when they become elite (see recruit blocks)
+      if(this._elite){
+        if(this.age>=this.maxAge){ this.dead=true; return; }
+      } else {
+        const effLife = lifeSeconds * 60 * (this.size/10) * this._lifeVariance;
+        if(this.age >= effLife){ this.dead=true; return; }
+      }
+    }
+    // Elite dots: slowly grow up to size 10 if smaller (0.03/frame ≈ ~3 seconds 4→10)
+    if(this._elite && this.size<10){
+      this.size = Math.min(10, this.size + 0.03);
+    }
+    if(this.type==='church'){
+      this.vx=0; this.vy=0;
+      let fc=0;
+      for(const d of dots) if(!d.dead && d!==this && d.faction==='church' && d.color===this.color && d.type==='normal') fc++;
+      if(fc>0) this.hadFollowers=true;
+      this._followerCount = fc;
+      this.size = 30;
+      // Die once a church has lost all followers (after having had some)
+      if(this.hadFollowers && fc===0) this.dead=true;
+    }
+    if(this.type==='tyrant'){
+      const fc=emperorFollowerCount[this.color]||0;
+      const target=Math.min(100, Math.max(MIN_SZ, 10+fc));
+      const next = this.size + (target - this.size) * 0.15;
+      // Don't shrink during brainwash or while an elite ring exists (immune to indirect effects)
+      const protectFromShrink = globalBrainwash || elites.length>0;
+      this.size = protectFromShrink ? Math.max(this.size, next) : next;
+    }
+    // Ascension: tyrant ascends to emperor when crowned. Revolutionary ascends to TYRANT when too big.
+    if(this.type==='tyrant' && this.crowned){
+      this.ascendToEmperor();
+    }
+    if(this.type==='revolutionary' && !this.crowned){
+      const fc=revFollowerCount[this.color]||0;
+      const targetSpeed = Math.min(8, 2.5 + Math.sqrt(fc)*1.2);
+      const sp=Math.hypot(this.vx,this.vy)||1;
+      const newSp = sp + (targetSpeed - sp) * 0.05;
+      this.vx=this.vx/sp*newSp; this.vy=this.vy/sp*newSp;
+    }
+    // Rev follower speed scales with follower count
+    if(this.type==='normal' && this.faction==='revolutionary'){
+      const fc=revFollowerCount[this.color]||0;
+      const targetSpeed = Math.min(7, 1.5 + Math.sqrt(fc)*1.0);
+      // Avoid zero-velocity freeze: if perfectly still, give a random direction first
+      if(this.vx === 0 && this.vy === 0){
+        const a = Math.random()*Math.PI*2;
+        this.vx = Math.cos(a) * 0.1;
+        this.vy = Math.sin(a) * 0.1;
+      }
+      const sp=Math.hypot(this.vx,this.vy)||1;
+      const newSp = sp + (targetSpeed - sp) * 0.05;
+      this.vx=this.vx/sp*newSp; this.vy=this.vy/sp*newSp;
+    }
+    if(this.type==='emperor'){
+      const fc=emperorFollowerCount[this.color]||0;
+      // With followers: 10 + fc. Without followers: shrinks to MIN_SZ
+      const target = fc>0 ? Math.min(100, 10+fc) : MIN_SZ;
+      const next = this.size + (target - this.size) * 0.15;
+      const protectFromShrink = globalBrainwash || elites.length>0;
+      this.size = protectFromShrink ? Math.max(this.size, next) : next;
+      if(this.hadFollowers && fc===0 && this.size<=MIN_SZ+1 && !protectFromShrink) this.dead=true;
+      if(fc>0) this.hadFollowers=true;
+    }
+    // Emperor followers that originated from a revolutionary wear off to neutral
+    if(this.type==='normal' && this.faction==='emperor' && this._revOrigin){
+      if(Math.random() < 0.00384){ // ~3s half-life
+        this.faction=null; this.color='white'; this.crowned=false;
+        this._wasRev = true; this._revOrigin = false;
+      }
+    }
+    this.x+=this.vx*actionRate; this.y+=this.vy*actionRate;
+    if(this.crowned && !(this.type==='normal' && (this.faction==='revolutionary' || this.faction==='church'))){
+      this.vx=0; this.vy=0;
+    }
+    if(this.type!=='tyrant' && this.type!=='emperor'){
+      this.size=Math.max(MIN_SZ,Math.min(MAX_SZ,this.size));
+    } else {
+      this.size=Math.max(MIN_SZ,Math.min(100,this.size));
+    }
+    const r = (this.crowned && !(this.type==='normal' && (this.faction==='revolutionary' || this.faction==='church'))) ? this.size+9 : this.size;
+    if(!this._atWar && !(this._bwT>0)){
+      if(this.x<r)    {this.x=r;    this.vx= Math.abs(this.vx);}
+      if(this.x>CW-r) {this.x=CW-r; this.vx=-Math.abs(this.vx);}
+      if(this.y<r)    {this.y=r;    this.vy= Math.abs(this.vy);}
+      if(this.y>CH-r) {this.y=CH-r; this.vy=-Math.abs(this.vy);}
+    } else if(this._bwT>0){
+      // Clamp position but don't flip velocity
+      if(this.x<r)    this.x=r;
+      if(this.x>CW-r) this.x=CW-r;
+      if(this.y<r)    this.y=r;
+      if(this.y>CH-r) this.y=CH-r;
+    }
+    // Elite containment runs post-physics (see main loop), not here
+    const spd=Math.hypot(this.vx,this.vy);
+    const mx=this.type==='revolutionary'?9:this.type==='emperor'?3:5;
+    if(spd>mx  &&spd>0){this.vx*=mx/spd;  this.vy*=mx/spd;}
+    // Min speed clamp does not apply to dots currently being brainwashed
+    if(spd<0.28&&spd>0 && !(this._bwT>0)){this.vx*=0.28/spd;this.vy*=0.28/spd;}
+    // Ex-rev followers should never be stuck at zero velocity
+    if(this._wasRev && spd === 0){
+      const a = Math.random()*Math.PI*2;
+      this.vx = Math.cos(a) * 1.2;
+      this.vy = Math.sin(a) * 1.2;
+    }
+  }
+
+  draw(t) {
+    if(this._inChurch) return; // hidden inside church
+    if(this._warOff) return; // off-screen at war
+    const target=getDisplay(this.color);
+    const tf=parseRGB(target.fill), ts=parseRGB(target.stroke);
+    const k=0.18; // ease factor — ~5 frames to settle, 200ms at 60fps
+    this._dispFill[0]+=(tf[0]-this._dispFill[0])*k;
+    this._dispFill[1]+=(tf[1]-this._dispFill[1])*k;
+    this._dispFill[2]+=(tf[2]-this._dispFill[2])*k;
+    this._dispStroke[0]+=(ts[0]-this._dispStroke[0])*k;
+    this._dispStroke[1]+=(ts[1]-this._dispStroke[1])*k;
+    this._dispStroke[2]+=(ts[2]-this._dispStroke[2])*k;
+    let fill, stroke;
+    if(this._infected){
+      // Soft pink ffb3de
+      fill='rgb(255,179,222)';
+      stroke='rgb(200,130,180)';
+    } else {
+      fill=`rgb(${Math.round(this._dispFill[0])},${Math.round(this._dispFill[1])},${Math.round(this._dispFill[2])})`;
+      stroke=`rgb(${Math.round(this._dispStroke[0])},${Math.round(this._dispStroke[1])},${Math.round(this._dispStroke[2])})`;
+    }
+    ctx.save();
+    const dsz = this.size;
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,dsz,0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.strokeStyle=stroke; ctx.lineWidth=0.75; ctx.stroke();
+
+    // Church: just a plain circle, no cross
+
+    if(this.type==='politician' && !this._infected) {
+      ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(t*0.001);
+      const ringC=darkenHex(this.color.startsWith('#')?this.color:'#BF9E58',0.05);
+      for(let i=0;i<6;i++){
+        const a0=(i/6)*Math.PI*2;
+        ctx.beginPath(); ctx.arc(0,0,this.size+6,a0,a0+0.28);
+        ctx.strokeStyle=ringC+'99'; ctx.lineWidth=1.5; ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    if(this.type==='revolutionary' && !this._infected) {
+      const p=0.5+0.5*Math.sin(t*0.012);
+      const ringC=this.color.startsWith('#')?this.color:'#5A9FA4';
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.size+4+p*3,0,Math.PI*2);
+      ctx.strokeStyle=ringC+(Math.round((0.3+p*0.2)*255).toString(16).padStart(2,'0'));
+      ctx.lineWidth=1; ctx.stroke();
+    }
+
+    if(this.crowned && !this._infected && (this.type==='tyrant'||this.type==='revolutionary'||this.type==='emperor'||this.type==='church')){
+      ctx.strokeStyle='rgba(58,55,53,0.35)';
+      ctx.lineWidth=0.75;
+      ctx.lineCap='round';
+      const cs = this.size;
+      ctx.beginPath(); ctx.arc(this.x, this.y, cs+3, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(this.x, this.y, cs+6, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(this.x, this.y, cs+9, 0, Math.PI*2); ctx.stroke();
+      ctx.lineCap='butt';
+    }
+
+    ctx.restore();
+  }
+  hits(px,py){return(px-this.x)**2+(py-this.y)**2<=(this.size+10)**2;}
+}
+
+// ── State ────────────────────────────────────────────────────
+let dots=[], running=false, fx=[], totalRevMass=0, emperorMassByColor={}, emperorFollowerCount={};
+let revFollowerCount={}, polLeaderByColor={}, empLeaderByColor={}, tyrantByColor={}, churchMassByColor={};
+let revCrownedFcByColor={}; // followers-count snapshot when each rev colour first crowned
+let _dotIdCounter=0;
+let walls=[], drawingWall=false, wallStart=null, wallPreview=null;
+let buttonsUsed = new Set();
+let brainwashers=[]; // { x, y, edge, color, nx, ny } — position, surface edge, current allegiance colour, inward normal
+let domColorCache='white'; // cached top-mass colour for brainwash allegiance
+let domPctCache=0; // cached dominance fraction (0–1)
+let elites=[]; // { x, y, r } — elite zones, dots inside go black & immune, dots outside slowly shrink
+let eliteFrames=0; // tick counter for persistent elite conversion
+let globalBrainwash=false; // global brainwash toggle
+let globalBrainwashFrames=0;
+let globalWar=false; // war toggle
+let warFrames=0;
+let draftDir=null; // [dx,dy] locked for current draft
+let bwSpawnSize=10; // spawn size while brainwash active, shrinks alongside dots
+
+function startGame() {
+  document.getElementById('win-overlay').style.display='none';
+  sizeCanvas();
+  dots=[]; fx=[]; polIdx=0; revIdx=0; empIdx=0; churchCornerIdx=0;
+  revCrownedFcByColor={};
+  walls=[]; drawingWall=false; wallStart=null; wallPreview=null;
+  regions=null;
+  brainwashers=[]; domColorCache='white';
+  elites=[]; spawnSize=10;
+  globalBrainwash=false;
+  bwSpawnSize=10;
+  globalWar=false;
+  warFrames=0;
+  draftDir=null;
+  document.getElementById('red-btn').classList.remove('active');
+  document.getElementById('blue-btn').classList.remove('active');
+  buttonsUsed = new Set();
+  document.getElementById('brain-btn')?.classList.remove('active');
+  document.getElementById('div-btn').classList.remove('active');
+  document.getElementById('elite-btn')?.classList.remove('active');
+  document.getElementById('war-btn')?.classList.remove('active');
+  birthFrames=0;
+  ctx.fillStyle='#ECE7DF'; ctx.fillRect(0,0,CW,CH);
+  const m=22;
+  const place=(col,type='normal',faction=null)=>{
+    const d = new Dot(m+Math.random()*(CW-m*2), m+Math.random()*(CH-m*2), col, type, faction);
+    const expectedLife = lifeSeconds * 60 * (d.size/10) * d._lifeVariance;
+    d.age = Math.floor(Math.random() * expectedLife * 0.6);
+    dots.push(d);
+  };
+  for(let i=0;i<5;i++) place('red');
+  for(let i=0;i<5;i++) place('blue');
+  for(let i=0;i<20;i++) place('white');
+  running=true;
+}
+
+// ── Input ────────────────────────────────────────────────────
+function handleAction(clientX, clientY, player) {
+  if(!running) return;
+  const rect=canvas.getBoundingClientRect();
+  const mx=(clientX-rect.left)*(CW/rect.width);
+  const my=(clientY-rect.top)*(CH/rect.height);
+  for(let i=dots.length-1;i>=0;i--) {
+    const d=dots[i]; if(!d.hits(mx,my)) continue;
+    if(d.type==='emperor') return;
+    if(d.type==='church') return; // church buildings immune
+    if(d.faction==='church'){
+      // Church follower: convert to player colour (or white)
+      d.color=player; d.faction=null; d.type='normal';
+      addFX(mx,my,player,20); return;
+    }
+    if(d.type==='normal' && (d.faction==='revolutionary' || d.faction==='emperor')){
+      const lt = d.faction==='revolutionary' ? 'revolutionary' : 'emperor';
+      const leaderExists = dots.some(x => !x.dead && x.color===d.color && x.type===lt);
+      if(leaderExists) return;
+      d.color='white'; d.faction=null;
+      addFX(mx,my,'white',20); return;
+    }
+    if(d.type==='tyrant'){ d.dead=true; addFX(mx,my,'white',24); return; }
+    if(d.type==='revolutionary'){
+      d.color=player; d.faction=null; d.type='normal';
+      addFX(mx,my,player,26); return;
+    }
+    if(d.color===player){
+      d.size=Math.min(MAX_SZ,d.size+3); addFX(mx,my,player,14);
+    } else if(d.color==='white'){
+      d.color=player; addFX(mx,my,player,20);
+    } else {
+      d.color='white'; d.faction=null; d.type='normal'; addFX(mx,my,'white',20);
+    }
+    return;
+  }
+}
+
+function canvasPoint(ev){
+  const r=canvas.getBoundingClientRect();
+  const cx=ev.clientX!==undefined?ev.clientX:(ev.touches&&ev.touches[0]?ev.touches[0].clientX:0);
+  const cy=ev.clientY!==undefined?ev.clientY:(ev.touches&&ev.touches[0]?ev.touches[0].clientY:0);
+  return {x:cx-r.left, y:cy-r.top};
+}
+canvas.addEventListener('mousedown',e=>{
+  if(!drawingWall) return; e.preventDefault();
+  const p=canvasPoint(e);
+  if(!wallStart){
+    // First tap: place start
+    wallStart=p; wallPreview=p;
+  } else {
+    // Second tap: place end, commit wall, exit drawing mode
+    if(Math.hypot(p.x-wallStart.x,p.y-wallStart.y)>10) walls.push({x1:wallStart.x,y1:wallStart.y,x2:p.x,y2:p.y});
+    wallStart=null; wallPreview=null; drawingWall=false;
+    document.getElementById('div-btn').classList.remove('active');
+  }
+});
+canvas.addEventListener('mousemove',e=>{ if(!drawingWall||!wallStart) return; wallPreview=canvasPoint(e); });
+canvas.addEventListener('mouseup',e=>{ /* no-op for tap-tap */ });
+canvas.addEventListener('touchstart',e=>{
+  if(drawingWall){
+    e.preventDefault();
+    const p=canvasPoint(e);
+    if(!wallStart){
+      wallStart=p; wallPreview=p;
+    } else {
+      if(Math.hypot(p.x-wallStart.x,p.y-wallStart.y)>10) walls.push({x1:wallStart.x,y1:wallStart.y,x2:p.x,y2:p.y});
+      wallStart=null; wallPreview=null; drawingWall=false;
+      document.getElementById('div-btn').classList.remove('active');
+    }
+    return;
+  }
+  e.preventDefault();
+  for(const t of e.changedTouches) handleAction(t.clientX,t.clientY,currentPlayer);
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{ if(!drawingWall||!wallStart) return; e.preventDefault(); wallPreview=canvasPoint(e); },{passive:false});
+canvas.addEventListener('touchend',e=>{ /* no-op for tap-tap */ });
+canvas.addEventListener('click',e=>{ if(drawingWall) return; e.preventDefault(); handleAction(e.clientX,e.clientY,currentPlayer); });
+canvas.addEventListener('contextmenu',e=>{e.preventDefault();handleAction(e.clientX,e.clientY,currentPlayer==='red'?'blue':'red');});
+
+document.getElementById('red-btn').addEventListener('click',()=>setPlayer('red'));
+document.getElementById('blue-btn').addEventListener('click',()=>setPlayer('blue'));
+document.getElementById('cit-btn').addEventListener('click',()=>setPlayer('white'));
+function medianCitizenSize(){
+  const sizes = dots.filter(d => !d.dead && d.type==='normal' && !d._elite && !d._infected).map(d => d.size);
+  if(sizes.length === 0) return 10;
+  sizes.sort((a,b)=>a-b);
+  const mid = Math.floor(sizes.length/2);
+  return sizes.length % 2 === 0 ? (sizes[mid-1]+sizes[mid])/2 : sizes[mid];
+}
+document.getElementById('pol-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('pol');
+  const col=POL_PALETTE[polIdx%POL_PALETTE.length]; polIdx++;
+  const newPol = new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'politician','politician');
+  newPol._polId = Symbol('pol');
+  newPol.size = Math.max(newPol.size, medianCitizenSize() * 1.1);
+  dots.push(newPol);
+});
+document.getElementById('rev-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('rev');
+  const col=REV_PALETTE[revIdx%REV_PALETTE.length]; revIdx++;
+  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'revolutionary','revolutionary'));
+});
+document.getElementById('elite-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('elite');
+  if(elites.length>0){
+    // Toggle off: dissolve all rings, release elite dots back to neutral white
+    for(const d of dots){
+      if(d._elite){
+        d._elite = false;
+        d._eliteId = null;
+        d._eliteFullyIn = false;
+        d.color = 'white';
+        d.faction = null;
+        d.maxAge = null;
+      }
+    }
+    elites = [];
+    document.getElementById('elite-btn').classList.remove('active');
+    return;
+  }
+  const r = 36;
+  const cx = CW/2, cy = CH/2;
+  const eliteId = Symbol('elite');
+  for(const d of dots){
+    if(d.dead||d.type==='church') continue;
+    if(d.type==='politician'||d.faction==='politician'){
+      // Politicians convert via contact with the ring, not at spawn — skip them here
+      continue;
+    }
+    const dx=d.x-cx, dy=d.y-cy;
+    const dist = Math.hypot(dx,dy);
+    if(dist + d.size <= r){
+      if(d.type==='revolutionary'||d.type==='tyrant'||d.type==='emperor'){
+        cascadeNeutralize(d);
+      }
+      d.type='normal'; d.faction=null;
+      d._eliteId = eliteId;
+      d._elite = true;
+      d._eliteFullyIn = true; d._infected=false; d._panicked=false; d._cureTouches=null;
+      d.color = '#28231E';
+      d.maxAge = d.age + Math.floor((90 + Math.random()*10) * 60);
+    }
+  }
+  elites.push({x:cx, y:cy, r, id:eliteId});
+  // If no elite dots ended up inside the ring, create one at the centre
+  const anyInside = dots.some(d => !d.dead && d._eliteId === eliteId);
+  if(!anyInside){
+    const newDot = new Dot(cx, cy, '#28231E', 'normal', null);
+    newDot._eliteId = eliteId;
+    newDot._elite = true;
+    newDot._eliteFullyIn = true;
+    newDot.size = 10;
+    newDot.maxAge = newDot.age + Math.floor((90 + Math.random()*10) * 60);
+    // Slow it down so it doesn't fly out before clamp kicks in
+    newDot.vx *= 0.3; newDot.vy *= 0.3;
+    dots.push(newDot);
+  }
+  document.getElementById('elite-btn').classList.add('active');
+});
+document.getElementById('emp-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('tyrant');
+  const col=EMP_PALETTE[empIdx%EMP_PALETTE.length]; empIdx++;
+  const newTy = new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'tyrant', null);
+  newTy.size = Math.max(newTy.size, medianCitizenSize() * 1.1);
+  dots.push(newTy);
+});
+document.getElementById('church-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('church');
+  const existing=dots.filter(d=>!d.dead && d.type==='church').length;
+  if(existing>=4) return;
+  const inset=0;
+  const corners=[[inset,inset],[CW-inset,inset],[CW-inset,CH-inset],[inset,CH-inset]];
+  // Score each corner by how crowded it is (lower = clearer)
+  const scored = corners.map(([cx,cy]) => {
+    const blocked = dots.some(d=>!d.dead && d.type==='church' && Math.hypot(d.x-cx,d.y-cy)<60)
+      || brainwashers.some(bw=>Math.hypot(bw.x-cx,bw.y-cy)<200)
+      || dots.some(d=>!d.dead && d.type==='emperor' && d.size>30 && Math.hypot(d.x-cx,d.y-cy)<200);
+    let mass = 0;
+    for(const d of dots){
+      if(d.dead) continue;
+      const dx = d.x - cx, dy = d.y - cy;
+      const distSq = dx*dx + dy*dy;
+      if(distSq < 200*200){
+        mass += d.size * d.size;
+      }
+    }
+    return {cx, cy, blocked, mass};
+  });
+  // Sort by mass (clearest first), skipping blocked corners
+  const candidates = scored.filter(s => !s.blocked).sort((a,b) => a.mass - b.mass);
+  if(candidates.length === 0) return;
+  const {cx, cy} = candidates[0];
+  {
+    {
+      // If an emperor is alive, new church and followers spawn in the emperor's colour
+      const liveEmp = dots.find(d => !d.dead && d.type==='emperor');
+      const spawnColor = liveEmp ? liveEmp.color : '#7A9468';
+      const ch = new Dot(cx,cy,spawnColor,'church','church');
+      if(liveEmp) ch._preEmpColor = '#7A9468';
+      dots.push(ch);
+      // Spawn 5 followers near the church, in the inward direction (away from canvas edges)
+      // Determine inward arc based on which corner the church is at
+      const inwardX = cx < CW/2 ? 1 : -1;
+      const inwardY = cy < CH/2 ? 1 : -1;
+      const baseAng = Math.atan2(inwardY, inwardX);
+      for(let i=0;i<5;i++){
+        // Spread across a quarter-circle (90°) around the inward direction
+        const ang = baseAng + (-Math.PI/4) + (i/4)*Math.PI/2 + (Math.random()-0.5)*0.3;
+        const dist = 70 + Math.random()*20;
+        const fx = Math.min(CW-20, Math.max(20, cx + Math.cos(ang)*dist));
+        const fy = Math.min(CH-20, Math.max(20, cy + Math.sin(ang)*dist));
+        const follower = new Dot(fx, fy, spawnColor, 'normal', liveEmp ? 'emperor' : 'church');
+        if(liveEmp){ follower._preEmpColor = '#7A9468'; follower._preEmpFaction = 'church'; }
+        // Slow gentle velocity in a random inward direction
+        const va = baseAng + (Math.random()-0.5)*Math.PI*0.6;
+        follower.vx = Math.cos(va) * 0.5;
+        follower.vy = Math.sin(va) * 0.5;
+        dots.push(follower);
+      }
+      return;
+    }
+  }
+});
+// Region tracking for division logic
+let regions = null;
+function initRegions(){ regions = [{x:0, y:0, w:CW, h:CH}]; }
+
+document.getElementById('div-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('div');
+  if(!regions) initRegions();
+  // Weighted-random pick: probability proportional to region area (balanced subdivision)
+  const totalArea = regions.reduce((s,r) => s + r.w*r.h, 0);
+  let pick = Math.random() * totalArea;
+  let idx = 0;
+  for(let i=0;i<regions.length;i++){
+    pick -= regions[i].w * regions[i].h;
+    if(pick <= 0){ idx = i; break; }
+  }
+  const r = regions[idx];
+  // Bisect perpendicular to longer axis; random tie-break
+  const vertical = r.w > r.h ? true : r.h > r.w ? false : Math.random() < 0.5;
+  let wall, a, b;
+  if(vertical){
+    const x = r.x + r.w/2;
+    wall = {x1:x, y1:r.y, x2:x, y2:r.y+r.h};
+    a = {x:r.x, y:r.y, w:r.w/2, h:r.h};
+    b = {x:r.x+r.w/2, y:r.y, w:r.w/2, h:r.h};
+  } else {
+    const y = r.y + r.h/2;
+    wall = {x1:r.x, y1:y, x2:r.x+r.w, y2:y};
+    a = {x:r.x, y:r.y, w:r.w, h:r.h/2};
+    b = {x:r.x, y:r.y+r.h/2, w:r.w, h:r.h/2};
+  }
+  walls.push(wall);
+  regions.splice(idx, 1, a, b);
+});
+document.getElementById('unify-btn').addEventListener('click',()=>{
+  walls=[]; drawingWall=false; wallStart=null; wallPreview=null;
+  regions=null;
+  elites=[];
+  brainwashers=[];
+  globalBrainwash=false;
+  document.getElementById('brain-btn').classList.remove('active');
+  for(const d of dots){
+    if(d._infected){
+      d._infected = false;
+      d._panicked = false;
+      d._cureTouches = null;
+      d.color = 'white';
+      d.faction = null;
+    }
+  }
+  document.getElementById('div-btn').classList.remove('active');
+});
+document.getElementById('disaster-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('disaster');
+  for(const d of dots){
+    if(d.dead) continue;
+    if(d.type==='church') continue; // buildings immune
+    if(d.type==='emperor') continue; // emperors immune
+    if(isEliteInRing(d)) continue;
+    if(Math.random() < 0.5) d.dead = true;
+  }
+});
+document.getElementById('plague-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('alarmism');
+  const candidates = dots.filter(d => !d.dead && !d._elite && !d._infected && !d._bwT &&
+    d.type !== 'church' && d.type !== 'politician' && d.type !== 'emperor');
+  if(candidates.length === 0) return;
+  const patient = candidates[Math.floor(Math.random()*candidates.length)];
+  patient._infected = true;
+  patient._panicked = true;
+  patient._infectedFrames = 0;
+  patient.color = '#ffb3de';
+  patient.faction = null;
+  patient.type = 'normal';
+  // Boost their speed
+  const sp = Math.hypot(patient.vx, patient.vy) || 0.1;
+  const targetSp = 4;
+  patient.vx = patient.vx/sp * targetSp;
+  patient.vy = patient.vy/sp * targetSp;
+});
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  paused = false;
+  document.getElementById('pause-btn').textContent = '⏸';
+  startGame();
+});
+document.getElementById('pause-btn').addEventListener('click',()=>{
+  paused=!paused;
+  document.getElementById('pause-btn').textContent = paused ? '▶' : '⏸';
+});
+document.getElementById('birth-slider').addEventListener('input',e=>{ birthRate=+e.target.value; });
+document.getElementById('action-slider').addEventListener('input',e=>{ actionRate=+e.target.value; });
+document.getElementById('life-slider').addEventListener('input',e=>{ lifeSeconds=+e.target.value; });
+
+document.getElementById('brain-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('brain');
+  globalBrainwash = !globalBrainwash;
+  if(globalBrainwash){
+    // If elite has already shrunk spawnSize, start bwSpawnSize from there
+    bwSpawnSize = Math.min(bwSpawnSize, spawnSize);
+  }
+  document.getElementById('brain-btn').classList.toggle('active', globalBrainwash);
+});
+document.getElementById('war-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('war');
+  globalWar = !globalWar;
+  warFrames = 0;
+  if(globalWar){
+    draftDir = [1, 0]; // always East
+  } else {
+    draftDir = null;
+  }
+  document.getElementById('war-btn').classList.toggle('active', globalWar);
+});
+
+(function(){
+  function bindSpawn(id, makeDot, tag){
+    const btn=document.getElementById(id);
+    let timer=null;
+    const spawn=()=>{ if(!running) return; dots.push(makeDot()); if(tag) buttonsUsed.add(tag); };
+    const start=e=>{ e.preventDefault(); if(!running) return; spawn(); timer=setInterval(spawn,90); };
+    const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };
+    btn.addEventListener('mousedown',start); btn.addEventListener('mouseup',stop); btn.addEventListener('mouseleave',stop);
+    btn.addEventListener('touchstart',start,{passive:false}); btn.addEventListener('touchend',stop); btn.addEventListener('touchcancel',stop);
+  }
+  const rp=()=>[CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8];
+  bindSpawn('cit-btn', ()=>{ const [x,y]=rp(); return new Dot(x,y,'white'); }, 'cit');
+  bindSpawn('r-btn',   ()=>{ const [x,y]=rp(); return new Dot(x,y,'red'); }, 'red');
+  bindSpawn('b-btn',   ()=>{ const [x,y]=rp(); return new Dot(x,y,'blue'); }, 'blue');
+  bindSpawn('red-btn', ()=>{ const [x,y]=rp(); return new Dot(x,y,'red'); }, 'red');
+  bindSpawn('blue-btn',()=>{ const [x,y]=rp(); return new Dot(x,y,'blue'); }, 'blue');
+})();
+
+// ── Click FX ─────────────────────────────────────────────────
+function addFX(x,y,color,maxR){
+  const {fill}=getDisplay(color);
+  fx.push({x,y,fill,r:maxR*.15,maxR,a:.8});
+}
+function drawFX(){
+  for(let i=fx.length-1;i>=0;i--){
+    const f=fx[i];
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    ctx.strokeStyle=f.fill+(Math.round(f.a*255).toString(16).padStart(2,'0'));
+    ctx.lineWidth=1; ctx.stroke();
+    f.r=Math.min(f.maxR,f.r+2.4); f.a-=0.055;
+    if(f.a<=0) fx.splice(i,1);
+  }
+}
+
+// ── Conversion helpers ───────────────────────────────────────
+function neutralise(d){
+  if(d.type==='tyrant'||d.type==='church'||d.faction==='church') return;
+  if(d.faction==='politician'){ d.color='white'; return; }
+  if(d.faction==='emperor') return;
+  d.color='white'; d.faction=null; d.type='normal';
+  d.size=Math.max(MIN_SZ,d.size-SHRINK);
+}
+function directConvert(d,toColor){
+  if(d.type==='tyrant'||d.type==='church'||d.faction==='church') return;
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  if(d.faction==='emperor') return;
+  const wasWhite=d.color==='white';
+  d.color=toColor; d.faction=null; d.type='normal';
+  if(!wasWhite) d.size=Math.max(MIN_SZ,d.size-SHRINK);
+}
+function politicize(d,toColor,leader){
+  if(d.type==='tyrant'||d.type==='church'||d.faction==='church') return;
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  d.color=toColor; d.faction='politician'; d.type='normal';
+  d.crowned=false;
+  // Inherit politician ID from leader (or any politician follower as proxy)
+  if(leader){
+    if(leader._polId) d._polId = leader._polId;
+    else if(leader.faction==='politician') d._polId = leader._polId;
+  }
+  // growth applied by caller via tryGrow
+  const spd=Math.hypot(d.vx,d.vy)||0.1;
+  d.vx=d.vx/spd*Math.max(0.2,spd*0.45);
+  d.vy=d.vy/spd*Math.max(0.2,spd*0.45);
+}
+function emperize(d,toColor){
+  if(d.type==='tyrant'||d.type==='church') return;
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  d.color=toColor; d.faction='emperor'; d.type='normal';
+  const spd=Math.hypot(d.vx,d.vy)||0.1;
+  d.vx=d.vx/spd*Math.max(0.15,spd*0.4);
+  d.vy=d.vy/spd*Math.max(0.15,spd*0.4);
+}
+function cyanize(d,toColor){
+  if(d.type==='tyrant'||d.type==='church') return;
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  d.color=toColor; d.faction='revolutionary'; d.type='normal';
+  d.crowned=false;
+  // growth applied by caller via tryGrow
+}
+function boostConvert(d){
+  const sp=Math.hypot(d.vx,d.vy)||1, ns=Math.min(9,sp*1.6);
+  d.vx=d.vx/sp*ns; d.vy=d.vy/sp*ns;
+}
+function cascadeNeutralize(parent){
+  const f=parent.faction, c=parent.color;
+  for(const d of dots){
+    if(d===parent || d.dead) continue;
+    if(d.color===c && d.faction===f && d.type==='normal'){
+      if(f==='revolutionary') d._wasRev = true;
+      d.color='white'; d.faction=null; d.crowned=false;
+    }
+  }
+}
+function isProtected(d){
+  if(d._infected) return false;
+  return d.crowned && (d.type==='revolutionary'||d.type==='politician'||d.type==='emperor'||d.type==='tyrant'||d.type==='church');
+}
+
+// Rate-limited growth: each dot can gain growth at most 10 times per second.
+// Also: dots with 3+ same-colour neighbours touching cannot grow (anti-balloon).
+function tryGrow(d, amount){
+  // Count same-colour neighbours touching d right now (no stale cache)
+  let count=0;
+  for(const o of dots){
+    if(o===d||o.dead||o.color!==d.color) continue;
+    const dx=o.x-d.x, dy=o.y-d.y;
+    const md=d.size+o.size+8;
+    if(dx*dx+dy*dy < md*md){ if(++count>=3) break; }
+  }
+  if(count>=3) return false;
+  const now=performance.now();
+  if(!d._growLog) d._growLog=[];
+  while(d._growLog.length && now-d._growLog[0]>1000) d._growLog.shift();
+  if(d._growLog.length>=10) return false;
+  d.size=Math.min(MAX_SZ, d.size+amount);
+  d._growLog.push(now);
+  return true;
+}
+
+// ── Collisions ───────────────────────────────────────────────
+function effR(d){
+  // Rev followers and church followers use plain size (no crown halo) so they don't stick artificially
+  if(d.type==='normal' && d.faction==='revolutionary') return d.size;
+  if(d.type==='normal' && d.faction==='church') return d.size;
+  // Crowned dots have three rings out to +9 — use outermost as collision boundary
+  if(d.crowned) return d.size+9;
+  if(d.type==='emperor') return d.size+4;
+  if(d.type==='tyrant') return d.size+2.5;
+  return d.size;
+}
+
+function collide(){
+  for(let i=0;i<dots.length;i++){
+    if(dots[i].dead||dots[i]._inChurch||dots[i]._warOff) continue;
+    for(let j=i+1;j<dots.length;j++){
+      if(dots[j].dead||dots[j]._inChurch||dots[j]._warOff) continue;
+      const a=dots[i],b=dots[j];
+      // Soldiers phase through emperors entirely (steering handles avoidance)
+      if((a._atWar && b.type==='emperor') || (b._atWar && a.type==='emperor')) continue;
+      const ra=effR(a), rb=effR(b);
+      const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy,md=ra+rb;
+      if(d2>=md*md) continue;
+      // Alarmism transmission: panicked dot infects target on contact; infecter calms down. Brainwashed dots, politicians, emperors and church buildings immune.
+      const isPolImmune = d => d.type==='politician' || d.faction==='politician';
+      const isAlarmImmune = d => isPolImmune(d) || d.type==='emperor' || d.type==='church';
+      // Emperors kill alarmists outright on direct contact
+      if(a.type==='emperor' && b._infected){ b.dead=true; continue; }
+      if(b.type==='emperor' && a._infected){ a.dead=true; continue; }
+      if(a._infected && a._panicked && !b._infected && !b._elite && !b._bwT && !isAlarmImmune(b) && b.type!=='tyrant'){
+        b._infected = true; b._panicked = true; b._infectedFrames = 0;
+        b.color = '#ffb3de'; b.faction = null; b.type = 'normal';
+        b.size = Math.max(MIN_SZ, b.size - 5/b.size);
+        const sp = Math.hypot(b.vx,b.vy)||0.1;
+        b.vx = b.vx/sp * 4; b.vy = b.vy/sp * 4;
+        a._panicked = false;
+      } else if(b._infected && b._panicked && !a._infected && !a._elite && !a._bwT && !isAlarmImmune(a) && a.type!=='tyrant'){
+        a._infected = true; a._panicked = true; a._infectedFrames = 0;
+        a.color = '#ffb3de'; a.faction = null; a.type = 'normal';
+        a.size = Math.max(MIN_SZ, a.size - 5/a.size);
+        const sp = Math.hypot(a.vx,a.vy)||0.1;
+        a.vx = a.vx/sp * 4; a.vy = a.vy/sp * 4;
+        b._panicked = false;
+      }
+      // Cure: 2 touches by same colour convert alarmist to that colour
+      const cure = (al, healer) => {
+        if(!al._cureTouches) al._cureTouches = {};
+        al._cureTouches[healer.color] = (al._cureTouches[healer.color]||0) + 1;
+        if(al._cureTouches[healer.color] >= 2){
+          al._infected = false;
+          al._panicked = false;
+          al._cureTouches = null;
+          al.color = healer.color;
+          al.faction = (healer.color==='red'||healer.color==='blue'||healer.color==='white') ? null : healer.faction;
+          al.size = Math.max(MIN_SZ, al.size - 5/al.size);
+        }
+      };
+      if(a._infected && !b._infected && !b._elite && b.color!=='#28231E') cure(a, b);
+      if(b._infected && !a._infected && !a._elite && a.color!=='#28231E') cure(b, a);
+      const d=Math.sqrt(d2); if(d<.001) continue;
+      const nx=dx/d,ny=dy/d;
+      const bwInvolved=a._bwT>0||b._bwT>0;
+      const bothBw=a._bwT>0 && b._bwT>0;
+      const churchInvolved=a.type==='church'||b.type==='church'||a.faction==='church'||b.faction==='church';
+      const leaderInvolved=a.type==='church'||b.type==='church';
+      if(!bwInvolved){
+        if(leaderInvolved){
+          // Church LEADER stays put; push the other dot out by overlap amount only
+          const ch = a.type==='church' ? a : b;
+          const other = ch===a ? b : a;
+          // Same-colour church follower over size 12 gets absorbed into the building forever
+          if(other.type==='normal' && other.faction==='church' && other.color===ch.color && other.size>12){
+            other._inChurch = true;
+            other.vx = 0; other.vy = 0;
+            continue;
+          }
+          const onx = ch===a ? nx : -nx; // outward from church
+          const ony = ch===a ? ny : -ny;
+          const sep = (md - d) + 2;
+          other.x += onx * sep;
+          other.y += ony * sep;
+          other.x = Math.max(other.size, Math.min(CW-other.size, other.x));
+          other.y = Math.max(other.size, Math.min(CH-other.size, other.y));
+          // If still overlapping church after canvas clamp → trapped against the wall, kill it
+          const ndx = other.x - ch.x, ndy = other.y - ch.y;
+          if(Math.hypot(ndx, ndy) < ch.size + other.size){
+            other.dead = true;
+            continue;
+          }
+          // Anti-glitch: track consecutive frames of church-contact and kill if persistent
+          other._churchTouchFrames = (other._churchTouchFrames||0) + 1;
+          if(other._churchTouchFrames > 12){
+            other.dead = true;
+            continue;
+          }
+          applyConversion(a,b);
+          const vn = other.vx*onx + other.vy*ony;
+          if(vn<0){ other.vx -= 2*vn*onx; other.vy -= 2*vn*ony; }
+          const outSpeed = other.vx*onx + other.vy*ony;
+          const minOut = 1.5;
+          if(outSpeed<minOut){
+            other.vx += (minOut-outSpeed)*onx;
+            other.vy += (minOut-outSpeed)*ony;
+          }
+          continue;
+        } else if(churchInvolved){
+          // Church-involved (follower vs anything): apply priority shoving — bigger flock yields to smaller, flock yields to non-flock
+          const aIsFlock = a.faction==='church';
+          const bIsFlock = b.faction==='church';
+          let aPriority = 1, bPriority = 1;
+          if(aIsFlock) aPriority -= 0.5;
+          if(bIsFlock) bPriority -= 0.5;
+          if(aIsFlock && bIsFlock){
+            if(a.size > b.size) aPriority -= 0.3;
+            if(b.size > a.size) bPriority -= 0.3;
+          }
+          const totalP = aPriority + bPriority;
+          const aShare = bPriority / totalP; // a moves by this share
+          const bShare = aPriority / totalP;
+          const sep = md - d;
+          a.x -= nx*sep*aShare; a.y -= ny*sep*aShare;
+          b.x += nx*sep*bShare; b.y += ny*sep*bShare;
+          const ma=a.size,mb=b.size,vn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+          if(vn<0){
+            const imp=-(1+BOUNCE)*vn*ma*mb/(ma+mb);
+            a.vx-=(imp/ma)*nx*(aShare*2); a.vy-=(imp/ma)*ny*(aShare*2);
+            b.vx+=(imp/mb)*nx*(bShare*2); b.vy+=(imp/mb)*ny*(bShare*2);
+          }
+          applyConversion(a,b);
+          continue;
+        } else {
+          const sep=(md-d)*.5;
+          const aStatic = (a.type==='emperor' || (a.type==='tyrant' && a.crowned));
+          const bStatic = (b.type==='emperor' || (b.type==='tyrant' && b.crowned));
+          // Rev leader passes through other dots (impulse only on target)
+          if(a.type==='revolutionary'){
+            b.x+=nx*sep*2; b.y+=ny*sep*2;
+          }
+          else if(b.type==='revolutionary'){
+            a.x-=nx*sep*2; a.y-=ny*sep*2;
+          }
+          else if(aStatic && !bStatic){
+            b.x+=nx*sep*2; b.y+=ny*sep*2;
+          }
+          else if(bStatic && !aStatic){
+            a.x-=nx*sep*2; a.y-=ny*sep*2;
+          }
+          else { a.x-=nx*sep; a.y-=ny*sep; b.x+=nx*sep; b.y+=ny*sep; }
+        }
+      } else if(bothBw){
+        // Full separation + minimum repulsion so captured dots never stack
+        const sep=(md-d)*.6 + 1;
+        a.x-=nx*sep; a.y-=ny*sep; b.x+=nx*sep; b.y+=ny*sep;
+        const ma=a.size,mb=b.size,vn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+        if(vn<0){
+          const imp=-(1+BOUNCE)*vn*ma*mb/(ma+mb);
+          a.vx-=(imp/ma)*nx; a.vy-=(imp/ma)*ny;
+          b.vx+=(imp/mb)*nx; b.vy+=(imp/mb)*ny;
+        }
+        // Inject a tiny outward kick so near-stopped dots still drift apart
+        const kick=0.4;
+        a.vx -= nx*kick; a.vy -= ny*kick;
+        b.vx += nx*kick; b.vy += ny*kick;
+        continue;
+      }
+      const ma=a.size,mb=b.size,vn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+      if(vn<0){
+        if(!churchInvolved && !bwInvolved){
+          const imp=-(1+BOUNCE)*vn*ma*mb/(ma+mb);
+          if(!a.crowned && a.type!=='revolutionary'){ a.vx-=(imp/ma)*nx; a.vy-=(imp/ma)*ny; }
+          if(!b.crowned && b.type!=='revolutionary'){ b.vx+=(imp/mb)*nx; b.vy+=(imp/mb)*ny; }
+        }
+        applyConversion(a,b);
+      }
+    }
+  }
+}
+
+function isEliteInRing(d){
+  if(!d._elite||!d._eliteId) return false;
+  const ring = elites.find(e => e.id === d._eliteId);
+  if(!ring) return false;
+  const dx = d.x-ring.x, dy = d.y-ring.y;
+  return dx*dx + dy*dy < ring.r*ring.r;
+}
+function applyConversion(a,b){
+  // Elite dots are immune only while inside their ring
+  if(isEliteInRing(a)||isEliteInRing(b)) return;
+  // Soldiers are inert: no conversion either way while at war
+  if(a._atWar || b._atWar) return;
+  // Ex-emperor: every contact shrinks it more aggressively; dies when small
+  if(a._exEmperor){
+    a.size = Math.max(MIN_SZ, a.size - 0.5);
+    if(a.size <= MIN_SZ + 0.5){ a.dead = true; return; }
+  }
+  if(b._exEmperor){
+    b.size = Math.max(MIN_SZ, b.size - 0.5);
+    if(b.size <= MIN_SZ + 0.5){ b.dead = true; return; }
+  }
+  // ── Emperor-class leaders (type='emperor' or crowned tyrant) kill or convert anything they touch
+  const isEmpClass = d => d.type==='emperor' || (d.type==='tyrant' && d.crowned);
+  const handleEmpClass = (emp, other) => {
+    if(other.type==='church') return false; // church buildings immune (static)
+    if(isEmpClass(other)) return false; // emperors don't fight each other
+    // Same-colour: no effect (covers all loyal subjects — emperor faction, rev faction, brainwashed neutrals adopting the colour)
+    if(other.color===emp.color) return false;
+    // White citizen: convert to emperor's follower
+    if(other.color==='white' && other.type==='normal'){
+      other.color = emp.color; other.faction = 'emperor';
+      return true;
+    }
+    // Politician leader: corrupt to emperor's cause (followers auto-follow via _polId loyalty)
+    if(other.type==='politician'){
+      other.color = emp.color; other.faction = 'emperor'; other.type = 'normal';
+      other.crowned = false;
+      return true;
+    }
+    // Everyone else: kill
+    if(other.type==='revolutionary'||other.type==='emperor'||other.type==='tyrant') cascadeNeutralize(other);
+    other.dead = true;
+    return true;
+  };
+  if(isEmpClass(a)){ if(handleEmpClass(a,b)) return; }
+  if(isEmpClass(b)){ if(handleEmpClass(b,a)) return; }
+
+  if(a.faction==='emperor' && b.faction!=='emperor') b.size=Math.min(MAX_SZ,b.size+0.1);
+  if(b.faction==='emperor' && a.faction!=='emperor') a.size=Math.min(MAX_SZ,a.size+0.1);
+
+  // ── Church
+  if(a.type==='church'||a.faction==='church'||b.type==='church'||b.faction==='church'){
+    const ch=(a.type==='church'||a.faction==='church')?a:b;
+    const ot=ch===a?b:a;
+    if(ot.type==='church'||ot.faction==='church'){
+      // Same-faction church: follower touching its leader gets +10 (skip growth while empire shares the colour)
+      const empireSharesColor = dots.some(d => !d.dead && d.type==='emperor' && d.color===ch.color);
+      if(ch.type==='church' && ot.type==='normal' && ot.faction==='church' && ot.color===ch.color){
+        if(!empireSharesColor) tryGrow(ot, 20/(ot.size*ot.size));
+      } else if(ot.type==='church' && ch.type==='normal' && ch.faction==='church' && ch.color===ot.color){
+        if(!empireSharesColor) tryGrow(ch, 20/(ch.size*ch.size));
+      }
+      return;
+    }
+    if(ot.type==='tyrant'){ ch.dead=true; return; }
+    if(ot.type==='revolutionary'||ot.faction==='revolutionary'){
+      // Church buildings don't convert — they stay and shrink as followers are stripped
+      if(ch.type==='church') return;
+      // Church followers only yield to revolutionary LEADERS, not rev followers
+      if(ot.type!=='revolutionary') return;
+      ch.color=ot.color; ch.faction='revolutionary'; ch.type='normal';
+      ch.vx=(Math.random()-0.5)*3; ch.vy=(Math.random()-0.5)*3; return;
+    }
+    if(isProtected(ot)) return;
+    // Skip church mass-conversion while an empire shares the church's colour (empire fully owns it)
+    const empireSharesColor = dots.some(d => !d.dead && d.type==='emperor' && d.color===ch.color);
+    if(empireSharesColor) return;
+    // Mass-based conversion: church-colour mass must exceed target's size²
+    const chMass = churchMassByColor[ch.color]||0;
+    const canConvert = chMass > ot.size*ot.size;
+    const isLeader=ch.type==='church';
+    if(isLeader){
+      if(canConvert){
+        ot.color=ch.color; ot.faction='church'; ot.type='normal';
+        tryGrow(ot, 20/(ot.size*ot.size));
+      }
+      // Crowned leader also kills larger (regardless of mass)
+      if(ch.crowned && ot.size>ch.size) ot.dead=true;
+      return;
+    }
+    // Follower: any non-flock contact sends them to the church leader (never converts)
+    if(ch.type==='normal' && ch.faction==='church'){
+      const isNonFlock = (ot.faction !== 'church') && (ot.type !== 'church');
+      if(isNonFlock && !ot._infected && ot.type!=='tyrant' && ot.type!=='politician' && ot.faction!=='politician'){
+        const leader = dots.find(d => !d.dead && d.type==='church' && d.color===ch.color);
+        if(leader){
+          const tdx = leader.x - ot.x, tdy = leader.y - ot.y;
+          const tdist = Math.hypot(tdx, tdy) || 1;
+          const sp2 = Math.max(0.8, Math.hypot(ot.vx, ot.vy));
+          ot.vx = (tdx/tdist) * sp2;
+          ot.vy = (tdy/tdist) * sp2;
+          // Evangelist (ch) moves outward to keep evangelising
+          const odx = ch.x - leader.x, ody = ch.y - leader.y;
+          const odist = Math.hypot(odx, ody) || 1;
+          ch.vx = (odx/odist) * 1.5;
+          ch.vy = (ody/odist) * 1.5;
+        }
+      }
+    }
+    if(ch.crowned){
+      if(ot.size>ch.size) ot.dead=true;
+      else if(canConvert){
+        ot.color=ch.color; ot.faction='church'; ot.type='normal';
+        tryGrow(ot, 20/(ot.size*ot.size));
+      }
+    }
+    return;
+  }
+
+  // ── Tyrant
+  if(a.type==='tyrant'&&b.type==='tyrant') return;
+  if(a.type==='tyrant'){
+    if(b.type==='emperor') return;
+    // Don't kill own followers
+    if(b.faction==='emperor' && b.color===a.color) return;
+    if(b.color==='white'&&b.type==='normal'){ b.color=a.color; b.faction='emperor'; return; }
+    if(b.size<=a.size){
+      if(isProtected(b)) return;
+      if(b.type==='revolutionary'||b.type==='politician') cascadeNeutralize(b);
+      b.dead=true; return;
+    }
+    if(!a.crowned && b.faction==='emperor' && (emperorMassByColor[b.color]||0)>a.size*a.size){ a.dead=true; return; }
+    return;
+  }
+  if(b.type==='tyrant'){
+    if(a.type==='emperor') return;
+    if(a.faction==='emperor' && a.color===b.color) return;
+    if(a.color==='white'&&a.type==='normal'){ a.color=b.color; a.faction='emperor'; return; }
+    if(a.size<=b.size){
+      if(isProtected(a)) return;
+      if(a.type==='revolutionary'||a.type==='politician') cascadeNeutralize(a);
+      a.dead=true; return;
+    }
+    if(!b.crowned && a.faction==='emperor' && (emperorMassByColor[a.color]||0)>b.size*b.size){ b.dead=true; return; }
+    return;
+  }
+
+  // ── Revolutionary vs Tyrant
+  if(a.type==='revolutionary'&&b.type==='tyrant'){
+    if(b.crowned){ a.dead=true; return; }
+    if(a.size<b.size){ a.dead=true; return; } // smaller rev dies vs bigger uncrowned tyrant
+    b.dead=true; tryGrow(a, 0.5); return;
+  }
+  if(b.type==='revolutionary'&&a.type==='tyrant'){
+    if(a.crowned){ b.dead=true; return; }
+    if(b.size<a.size){ b.dead=true; return; }
+    a.dead=true; tryGrow(b, 0.5); return;
+  }
+  // Rev leader vs emperor leader
+  if(a.type==='revolutionary'&&b.type==='emperor'){
+    if(a.size<b.size){ a.dead=true; return; }
+    if(isProtected(b)) return;
+    cascadeNeutralize(b); b.dead=true; tryGrow(a, 0.5); return;
+  }
+  if(b.type==='revolutionary'&&a.type==='emperor'){
+    if(b.size<a.size){ b.dead=true; return; }
+    if(isProtected(a)) return;
+    cascadeNeutralize(a); a.dead=true; tryGrow(b, 0.5); return;
+  }
+
+  // ── Rev leader vs anything else
+  if(a.type==='revolutionary'){
+    if(b.faction==='church'||b.type==='church') return;
+    if(isProtected(b)) return;
+    if(b.type==='politician'){
+      if(a.size > b.size){
+        // Rev leader is bigger: eats the politician
+        cascadeNeutralize(b); b.dead=true; tryGrow(a,0.5); return;
+      } else {
+        // Pol leader is bigger-or-equal: politicizes the rev leader AND all his followers
+        const revColor = a.color;
+        for(const d of dots){
+          if(d.dead) continue;
+          if(d.color===revColor && d.faction==='revolutionary' && d.type==='normal'){
+            politicize(d, b.color, b);
+          }
+        }
+        cascadeNeutralize(a); politicize(a, b.color, b); tryGrow(b, 0.5); return;
+      }
+    }
+    // Rev follower of OTHER colour: a (leader) absorbs it if same-size-or-bigger
+    if(b.faction==='revolutionary' && b.type==='normal' && b.color!==a.color){
+      if(a.size>=b.size){ b.color=a.color; return; }
+      return;
+    }
+    if(b.faction==='emperor'){
+      if(b.size<=a.size){ cyanize(b,a.color); tryGrow(b,1); return; }
+      b.dead=true; tryGrow(a,0.5); return;
+    }
+    if(b.size<=a.size){
+      if(b.type==='revolutionary'){ /* handled in rev-vs-rev */ }
+      else { cyanize(b,a.color); tryGrow(b,1); return; }
+    } else {
+      if(b.faction==='politician'||b.color==='red'||b.color==='blue'||b.color==='white'){
+        if(b.type==='politician'||b.type==='emperor') cascadeNeutralize(b);
+        b.dead=true; tryGrow(a,0.5); return;
+      }
+      return;
+    }
+  }
+  if(b.type==='revolutionary'){
+    if(a.faction==='church'||a.type==='church') return;
+    if(isProtected(a)) return;
+    if(a.type==='politician'){
+      if(b.size > a.size){
+        cascadeNeutralize(a); a.dead=true; tryGrow(b,0.5); return;
+      } else {
+        const revColor = b.color;
+        for(const d of dots){
+          if(d.dead) continue;
+          if(d.color===revColor && d.faction==='revolutionary' && d.type==='normal'){
+            politicize(d, a.color, a);
+          }
+        }
+        cascadeNeutralize(b); politicize(b, a.color, a); tryGrow(a, 0.5); return;
+      }
+    }
+    if(a.faction==='revolutionary' && a.type==='normal' && a.color!==b.color){
+      if(b.size>=a.size){ a.color=b.color; return; }
+      return;
+    }
+    if(a.faction==='emperor'){
+      if(a.size<=b.size){ cyanize(a,b.color); tryGrow(a,1); return; }
+      a.dead=true; tryGrow(b,0.5); return;
+    }
+    if(a.size<=b.size){
+      if(a.type==='revolutionary'){ /* handled below */ }
+      else { cyanize(a,b.color); tryGrow(a,1); return; }
+    } else {
+      if(a.faction==='politician'||a.color==='red'||a.color==='blue'||a.color==='white'){
+        if(a.type==='politician'||a.type==='emperor') cascadeNeutralize(a);
+        a.dead=true; tryGrow(b,0.5); return;
+      }
+      return;
+    }
+  }
+
+  // ── Rev follower vs non-rev
+  if(a.faction==='revolutionary' && b.faction!=='revolutionary' && b.type!=='revolutionary'){
+    if(b.faction==='church'||b.type==='church') return;
+    if(b.type==='tyrant') return;
+    if(isProtected(b)) return;
+    // Rev follower converts smaller-or-equal tyrant followers, politician followers, and citizens
+    if(b.faction==='emperor'){
+      if(b.size<=a.size){ cyanize(b,a.color); tryGrow(b,0.5); return; }
+      return;
+    }
+    if(b.size<=a.size){ cyanize(b,a.color); tryGrow(b,0.5); boostConvert(b); return; }
+    return;
+  }
+  if(b.faction==='revolutionary' && a.faction!=='revolutionary' && a.type!=='revolutionary'){
+    if(a.faction==='church'||a.type==='church') return;
+    if(a.type==='tyrant') return;
+    if(isProtected(a)) return;
+    if(a.faction==='emperor'){
+      if(a.size<=b.size){ cyanize(a,b.color); tryGrow(a,0.5); return; }
+      return;
+    }
+    if(a.size<=b.size){ cyanize(a,b.color); tryGrow(a,0.5); boostConvert(a); return; }
+    return;
+  }
+
+  // ── Rev vs rev
+  if((a.faction==='revolutionary'||a.type==='revolutionary') && (b.faction==='revolutionary'||b.type==='revolutionary')){
+    if(a.color===b.color) return;
+    // Two rev leaders: bigger kills smaller
+    if(a.type==='revolutionary' && b.type==='revolutionary'){
+      if(a.size<b.size){ cascadeNeutralize(a); a.dead=true; return; }
+      if(b.size<a.size){ cascadeNeutralize(b); b.dead=true; return; }
+      return;
+    }
+    // Rev follower vs different-colour rev leader: nothing happens
+    if(a.type==='revolutionary' || b.type==='revolutionary') return;
+    // Two rev followers of different colours: smaller dies (legacy behaviour)
+    if(a.size<b.size){ a.dead=true; return; }
+    if(b.size<a.size){ b.dead=true; return; }
+    return;
+  }
+
+  // ── Pol vs rev (handled in rev blocks above; remaining: red/blue claims pol)
+  if((a.color==='red'||a.color==='blue') && b.type==='politician' && a.size>b.size){ b.color=a.color; return; }
+  if((b.color==='red'||b.color==='blue') && a.type==='politician' && b.size>a.size){ a.color=b.color; return; }
+
+  // ── Emperor faction
+  if(a.faction==='emperor' && b.faction!=='emperor'){
+    // Revolutionaries are immune to being emperized by tyrant mass
+    if(b.faction==='revolutionary'||b.type==='revolutionary'){ /* bounce */ }
+    else if((emperorMassByColor[a.color]||0)>b.size*b.size){
+      if(isProtected(b)) return;
+      if(b.type==='revolutionary') cascadeNeutralize(b);
+      emperize(b,a.color);
+      if(a.type==='emperor'){a.vx*=0.85;a.vy*=0.85;}
+      return;
+    }
+    if(a.type==='emperor') return;
+  }
+  if(b.faction==='emperor' && a.faction!=='emperor'){
+    if(a.faction==='revolutionary'||a.type==='revolutionary'){ /* bounce */ }
+    else if((emperorMassByColor[b.color]||0)>a.size*a.size){
+      if(isProtected(a)) return;
+      if(a.type==='revolutionary') cascadeNeutralize(a);
+      emperize(a,b.color);
+      if(b.type==='emperor'){b.vx*=0.85;b.vy*=0.85;}
+      return;
+    }
+    if(b.type==='emperor') return;
+  }
+  if(a.faction==='emperor' && b.faction==='emperor'){
+    if(a.color!==b.color){
+      if(a.type==='emperor'&&b.type==='normal'){b.color=a.color;return;}
+      if(b.type==='emperor'&&a.type==='normal'){a.color=b.color;return;}
+      if(a.type==='normal'&&b.type==='normal'){
+        if(a.size>b.size){b.dead=true;return;}
+        if(b.size>a.size){a.dead=true;return;}
+      }
+    }
+    return;
+  }
+
+  // ── Elite faction (only elite politicians actively convert; elite normals are inert)
+  if(a.faction==='elite' && a.type==='politician' && b.faction!=='elite'){
+    if(b.type==='church'||b.faction==='church') return;
+    if(b._elite) return;
+    if(isProtected(b)) return;
+    b.color = '#28231E';
+    b.faction = 'elite';
+    b.type = 'normal';
+    return;
+  }
+  if(b.faction==='elite' && b.type==='politician' && a.faction!=='elite'){
+    if(a.type==='church'||a.faction==='church') return;
+    if(a._elite) return;
+    if(isProtected(a)) return;
+    a.color = '#28231E';
+    a.faction = 'elite';
+    a.type = 'normal';
+    return;
+  }
+  if(a.faction==='elite' && b.faction==='elite') return;
+
+  // ── Politician faction
+  if(a.faction==='politician' && b.faction!=='politician'){
+    if(b.faction==='emperor') return;
+    // Bigger red/blue converts pol follower to their colour
+    if(a.type==='normal' && (b.color==='red'||b.color==='blue') && b.size>a.size){
+      a.color=b.color; a.faction=null; return;
+    }
+    if(b.size<a.size){politicize(b,a.color,a);tryGrow(a, 15/(a.size*a.size));if(a.type==='politician'){const ps=Math.hypot(a.vx,a.vy)||0.1;a.vx=a.vx/ps*Math.min(5,ps*1.25);a.vy=a.vy/ps*Math.min(5,ps*1.25);}return;}
+    return;
+  }
+  if(b.faction==='politician' && a.faction!=='politician'){
+    if(a.faction==='emperor') return;
+    if(b.type==='normal' && (a.color==='red'||a.color==='blue') && a.size>b.size){
+      b.color=a.color; b.faction=null; return;
+    }
+    if(a.size<b.size){politicize(a,b.color,b);tryGrow(b, 15/(b.size*b.size));if(b.type==='politician'){const ps=Math.hypot(b.vx,b.vy)||0.1;b.vx=b.vx/ps*Math.min(5,ps*1.25);b.vy=b.vy/ps*Math.min(5,ps*1.25);}return;}
+    return;
+  }
+  if(a.faction==='politician' && b.faction==='politician'){
+    if(a.color!==b.color && Math.abs(a.size-b.size)>=0.5){
+      const lg=a.size>b.size?a:b, sm=lg===a?b:a;
+      sm.color=lg.color;
+      tryGrow(lg, 15/(lg.size*lg.size));
+      return;
+    }
+    // Same colour: same as citizen cohesion - both grow with size² scaling
+    const smaller = a.size<=b.size?a:b;
+    tryGrow(smaller, 15/(smaller.size*smaller.size));
+    return;
+  }
+
+  // ── Normal citizens
+  if(a.color==='white'&&b.color==='white') return;
+  // Same colour: both grow, scaled by size², rate-limited; ZERO growth if 3+ same-colour neighbours; 1-sec per-pair cooldown
+  if(a.color===b.color){
+    if(a._bwImmune>0||b._bwImmune>0) return;
+    if(a.faction==='emperor'||b.faction==='emperor') return;
+    if(a.faction==='revolutionary'||b.faction==='revolutionary') return; // no cohesion for rev — they don't clump
+    if(a.faction==='church'||b.faction==='church') return; // no cohesion for church flock — they don't clump
+    if((a._sameColorNeighbours||0)>=3 || (b._sameColorNeighbours||0)>=3) return;
+    // Per-pair cooldown
+    const now=performance.now();
+    if(!a._lastPairGrow) a._lastPairGrow={};
+    if(!b._lastPairGrow) b._lastPairGrow={};
+    const aId=a._id||(a._id=++_dotIdCounter);
+    const bId=b._id||(b._id=++_dotIdCounter);
+    if(now - (a._lastPairGrow[bId]||0) < 1000) return;
+    if(now - (b._lastPairGrow[aId]||0) < 1000) return;
+    a._lastPairGrow[bId]=now;
+    b._lastPairGrow[aId]=now;
+    tryGrow(a, 15/(a.size*a.size));
+    tryGrow(b, 15/(b.size*b.size));
+    return;
+  }
+  if(Math.abs(a.size-b.size)<0.25) return; // inert when same size
+  const lg=a.size>b.size?a:b, sm=lg===a?b:a;
+  if(sm.type==='revolutionary'||sm.type==='emperor'||sm.faction==='emperor') return;
+  const lgRB=lg.color==='red'||lg.color==='blue';
+  const smRB=sm.color==='red'||sm.color==='blue';
+  // Red vs blue: smaller shrinks (scaled), turns white
+  if(lgRB&&smRB){
+    if(sm.faction==='politician'){sm.color=lg.color;return;}
+    if(sm.type==='tyrant'||sm.type==='church'||sm.faction==='church') return;
+    sm.color='white'; sm.faction=null; sm.type='normal';
+    sm.size=Math.max(MIN_SZ,sm.size-5/sm.size);
+    return;
+  }
+  // White vs red/blue: white converts to colour if smaller (no shrinkage)
+  if(lgRB && sm.color==='white'){
+    if(sm.type==='tyrant'||sm.type==='church'||sm.faction==='church') return;
+    sm.color=lg.color; sm.faction=null; sm.type='normal';
+    return;
+  }
+  // Bigger white neutralises smaller red/blue/politician-follower: turns white, shrinks
+  if(lg.color==='white' && smRB){
+    if(sm.type==='tyrant'||sm.type==='church'||sm.faction==='church') return;
+    if(sm.type==='politician') return; // politician leader immune
+    sm.color='white'; sm.faction=null; sm.type='normal';
+    sm.size=Math.max(MIN_SZ,sm.size-5/sm.size);
+    return;
+  }
+}
+
+// ── Win ──────────────────────────────────────────────────────
+function checkWin(){
+  const total=dots.length; if(!total) return;
+  const rc=dots.filter(d=>d.color==='red').length;
+  const bc=dots.filter(d=>d.color==='blue').length;
+  document.getElementById('rcount').textContent=rc;
+  document.getElementById('bcount').textContent=bc;
+  if(total>=5){
+    if(dots.every(d=>d.faction==='church'||d.type==='church')){endGame('Theocracy. Great.','#7A9468',`${total} faithful`);return;}
+
+    // Elite-ring win: when elite ring exists and elite-black is mass-dominant AND all outsiders are small whites
+    if(elites.length > 0){
+      const massByColor = {};
+      for(const d of dots){ massByColor[d.color] = (massByColor[d.color]||0) + d.size*d.size; }
+      let topColor=null, topMass=-1, totalMass=0;
+      for(const c in massByColor){ totalMass+=massByColor[c]; if(massByColor[c]>topMass){topMass=massByColor[c]; topColor=c;} }
+      if(topColor==='#28231E' && topMass/totalMass > 0.8){
+        let allWhitesOutside = true;
+        let outsiderCount = 0;
+        let churchPresent = false;
+        for(const d of dots){
+          if(d.dead) continue;
+          if(d._elite || isEliteInRing(d)) continue;
+          if(d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned)) continue;
+          if(d.type==='church'){ churchPresent = true; continue; }
+          if(d.faction==='church') continue; // church followers aren't real outsiders
+          outsiderCount++;
+          if(d.color !== 'white'){ allWhitesOutside = false; break; }
+        }
+        if(allWhitesOutside && outsiderCount > 0){
+          if(churchPresent){
+            // Kill churches dramatically before the win fires
+            for(const d of dots){
+              if(!d.dead && (d.type==='church' || d.faction==='church')) d.dead = true;
+            }
+          } else {
+            endGame('Elites took over','#28231E',`Total ${total}`);
+            return;
+          }
+        }
+      }
+    }
+
+    // Screen dominance win: any colour covering >=99% of canvas area triggers the washout ending
+    const screenArea=CW*CH;
+    const areaByColor={};
+    let politicianArea=0;
+    for(const d of dots){
+      const a=Math.PI*d.size*d.size;
+      areaByColor[d.color]=(areaByColor[d.color]||0)+a;
+      if(d.type==='politician' || d.faction==='politician') politicianArea+=a;
+    }
+    let domColor=null;
+    for(const c in areaByColor){ if(areaByColor[c]/screenArea>=0.99){ domColor=c; break; } }
+    // Politician total dominance (across all their colours)
+    if(!domColor && politicianArea/screenArea>=0.99){
+      // Find the dominant politician colour for the ending visual
+      let bestC=null, bestA=0;
+      for(const d of dots){
+        if(d.type==='politician'||d.faction==='politician'){
+          if((areaByColor[d.color]||0)>bestA){ bestA=areaByColor[d.color]; bestC=d.color; }
+        }
+      }
+      endGame('Another party took over', bestC||'#D4B85C', `Total ${total}`); return;
+    }
+    if(domColor){
+      if(domColor==='red'){endGame('Red wins','#B8695E',`Red ${rc}  ·  Blue ${bc}`);return;}
+      if(domColor==='blue'){endGame('Blue wins','#607EA0',`Red ${rc}  ·  Blue ${bc}`);return;}
+      if(domColor==='white') return; // neutrals can't win
+      if(domColor==='#28231E'){endGame('Clueless worship of elites','#28231E',`Total ${total}`);return;}
+      if(domColor==='#ffb3de'){endGame('Alarmists took over','#ffb3de',`Total ${total}`);return;}
+      const hasTyrant=dots.some(d=>d.type==='tyrant'&&d.color===domColor);
+      const hasEmperor=dots.some(d=>d.type==='emperor'&&d.color===domColor);
+      const hasPolLeader=dots.some(d=>d.type==='politician'&&d.color===domColor);
+      const hasRevLeader=dots.some(d=>d.type==='revolutionary'&&d.color===domColor);
+      if(hasTyrant||hasEmperor){endGame('The Emperor reigns supreme',domColor,`Total ${total}`);return;}
+      if(hasPolLeader){endGame('Another party took over',domColor,`Total ${total}`);return;}
+      if(hasRevLeader){endGame('Revolution swept the land',domColor,`Total ${total}`);return;}
+      // Fallback: leaderless colour win — name the colour
+      if(domColor==='red'){endGame('Red wins','#B8695E',`Red ${rc}  ·  Blue ${bc}`);return;}
+      if(domColor==='blue'){endGame('Blue wins','#607EA0',`Red ${rc}  ·  Blue ${bc}`);return;}
+      endGame('A colour took over',domColor,`Total ${total}`);return;
+    }
+
+    // Alarmism washout: ≥99% of dots are infected
+    const infectedCount = dots.filter(d => d._infected).length;
+    if(infectedCount/total >= 0.99){
+      endGame('Alarmists took over','#ffb3de',`Total ${total}`);
+      return;
+    }
+
+    const first=dots[0].color;
+    if(dots.every(d=>d.color===first)){
+      if(first==='red'){endGame('Red wins','#B8695E',`Red ${rc}  ·  Blue ${bc}`);return;}
+      if(first==='blue'){endGame('Blue wins','#607EA0',`Red ${rc}  ·  Blue ${bc}`);return;}
+      if(first==='white') return; // neutrals can't win
+      if(first==='#28231E'){endGame('Clueless worship of elites','#28231E',`Total ${total}`);return;}
+      if(first==='#ffb3de'){endGame('Alarmists took over','#ffb3de',`Total ${total}`);return;}
+      const hasTyrant=dots.some(d=>d.type==='tyrant');
+      const hasEmperor=dots.some(d=>d.type==='emperor');
+      const hasPolLeader=dots.some(d=>d.type==='politician');
+      const hasRevLeader=dots.some(d=>d.type==='revolutionary');
+      if(hasTyrant||hasEmperor){endGame('The Emperor reigns supreme',first,`Total ${total}`);return;}
+      if(hasPolLeader){endGame('Another party took over',first,`Total ${total}`);return;}
+      if(hasRevLeader){endGame('Revolution swept the land',first,`Total ${total}`);return;}
+      const f=dots[0].faction;
+      if(f==='emperor'){endGame('The Emperor reigns supreme',first,`Total ${total}`);return;}
+      if(f==='revolutionary'){endGame('Revolution swept the land',first,`Total ${total}`);return;}
+      if(f==='politician'){endGame('Another party took over',first,`Total ${total}`);return;}
+    }
+  }
+  const statusEl=document.getElementById('status');
+  if(statusEl){
+    const leader=rc>bc?'red':bc>rc?'blue':null;
+    if(leader){statusEl.textContent=`${leader} ${Math.round((leader==='red'?rc:bc)/total*100)}%`;statusEl.style.color=leader==='red'?'var(--red)':'var(--blue)';}
+    else{statusEl.textContent='';statusEl.style.color='var(--dim)';}
+  }
+}
+
+function endGame(title,color,stats){
+  running=false;
+  // Secret achievement: won via elite black washout, using ALL of Elite/Disaster/Brainwash/Division and ONLY those
+  const required = ['elite','disaster','brain','div'];
+  const usedAllRequired = required.every(b => buttonsUsed.has(b));
+  const usedOnlyRequired = [...buttonsUsed].every(b => required.includes(b));
+  if(usedAllRequired && usedOnlyRequired && color === '#28231E'){
+    title = 'You understood this game';
+  }
+  const wt=document.getElementById('win-title');
+  wt.textContent=title; wt.style.color=color;
+  document.getElementById('win-stats').textContent=stats;
+  document.getElementById('win-overlay').style.display='flex';
+}
+
+// ── Loop ─────────────────────────────────────────────────────
+function loop(t){
+  requestAnimationFrame(loop); if(!running) return;
+  if(paused){
+    // Render only — no physics, no births
+    ctx.fillStyle='#ECE7DF';ctx.fillRect(0,0,CW,CH);
+    for(const d of dots) d.draw(t);
+    // brainwash UI still rendered
+    for(const bw of brainwashers){
+      const {fill}=getDisplay(bw.color);
+      const grad=ctx.createRadialGradient(bw.x,bw.y,4,bw.x+bw.nx*60,bw.y+bw.ny*60,180);
+      grad.addColorStop(0, fill+'55'); grad.addColorStop(1, fill+'00');
+      ctx.save(); ctx.beginPath(); ctx.moveTo(bw.x,bw.y);
+      const spread=Math.acos(0.6), baseAng=Math.atan2(bw.ny,bw.nx);
+      ctx.arc(bw.x,bw.y,180,baseAng-spread,baseAng+spread);
+      ctx.closePath(); ctx.fillStyle=grad; ctx.fill(); ctx.restore();
+      ctx.strokeStyle=darkenHex(fill.startsWith('#')?fill:'#28231E',0.18);
+      ctx.lineWidth=2; ctx.lineCap='round';
+      const px=-bw.ny, py=bw.nx, armLen=14;
+      ctx.beginPath();
+      ctx.moveTo(bw.x+px*armLen, bw.y+py*armLen); ctx.lineTo(bw.x+bw.nx*armLen, bw.y+bw.ny*armLen);
+      ctx.moveTo(bw.x-px*armLen, bw.y-py*armLen); ctx.lineTo(bw.x+bw.nx*armLen, bw.y+bw.ny*armLen);
+      ctx.stroke(); ctx.lineCap='butt';
+    }
+    return;
+  }
+  if(birthRate>0){
+    birthFrames+=actionRate;
+    const interval=3600/birthRate;
+    if(birthFrames>=interval){
+      birthFrames=0;
+      let color = 'white';
+      // Under brainwash: probability of being born already in dominant colour = current dominance fraction
+      if(globalBrainwash && domColorCache !== 'white' && Math.random() < domPctCache){
+        color = domColorCache;
+      }
+      const sx = CW*.1+Math.random()*CW*.8;
+      const sy = CH*.1+Math.random()*CH*.8;
+      const newDot = new Dot(sx, sy, color);
+      // Apply spawn-size reductions from elite ring and/or brainwash — use the smaller
+      let effSpawn = newDot.size;
+      if(elites.length > 0) effSpawn = Math.min(effSpawn, spawnSize);
+      if(globalBrainwash) effSpawn = Math.min(effSpawn, bwSpawnSize);
+      newDot.size = effSpawn;
+      // If spawn lands inside an elite ring, give full size 10
+      for(const ring of elites){
+        const dx = sx-ring.x, dy = sy-ring.y;
+        if(dx*dx+dy*dy < ring.r*ring.r){ newDot.size = 10; break; }
+      }
+      dots.push(newDot);
+    }
+  }
+  totalRevMass=0;emperorMassByColor={};emperorFollowerCount={};revFollowerCount={};polLeaderByColor={};empLeaderByColor={};tyrantByColor={};churchMassByColor={};
+  for(const d of dots){
+    if(d.type==='tyrant'){tyrantByColor[d.color]=true;empLeaderByColor[d.color]=true;emperorMassByColor[d.color]=(emperorMassByColor[d.color]||0)+d.size*d.size;}
+    if(d.faction==='emperor'){emperorMassByColor[d.color]=(emperorMassByColor[d.color]||0)+d.size*d.size;if(d.type==='normal')emperorFollowerCount[d.color]=(emperorFollowerCount[d.color]||0)+1;if(d.type==='emperor')empLeaderByColor[d.color]=true;}
+    else if(d.faction==='revolutionary'){totalRevMass+=d.size*d.size;if(d.type==='normal')revFollowerCount[d.color]=(revFollowerCount[d.color]||0)+1;}
+    else if(d.faction==='politician'){if(d.type==='politician')polLeaderByColor[d.color]=true;}
+    if(d.type==='church'||d.faction==='church'){churchMassByColor[d.color]=(churchMassByColor[d.color]||0)+d.size*d.size;}
+  }
+  const colorMass={};
+  let eliteMassTotal = 0;
+  for(const d of dots){
+    if(d._atWar) continue; // soldiers are inert, not counted toward dominance
+    colorMass[d.color]=(colorMass[d.color]||0)+d.size*d.size;
+    if(d._elite) eliteMassTotal += d.size*d.size;
+  }
+  // Update brainwash allegiance to top-mass colour
+  {
+    let best=null, bestM=-1, totalM=0;
+    for(const c in colorMass){ totalM += colorMass[c]; if(colorMass[c]>bestM){ bestM=colorMass[c]; best=c; } }
+    if(best) domColorCache=best;
+    domPctCache = (best && totalM>0) ? bestM/totalM : 0;
+    for(const bw of brainwashers) bw.color=domColorCache;
+    // Update dominance bar
+    if(best && totalM>0){
+      const pct = (bestM/totalM)*100;
+      const fillEl = document.getElementById('dom-fill');
+      if(fillEl){
+        const disp = getDisplay(best);
+        fillEl.style.width = pct.toFixed(1)+'%';
+        fillEl.style.backgroundColor = disp.fill;
+      }
+      const pctEl = document.getElementById('dom-pct');
+      if(pctEl){
+        const disp = getDisplay(best);
+        pctEl.innerHTML = '<span class="pct-num">'+Math.round(pct)+'</span><span class="pct-sign">%</span>';
+        pctEl.style.color = disp.fill;
+      }
+    }
+  }
+  for(const d of dots){
+    if(d.type==='tyrant'||d.type==='revolutionary'||d.type==='emperor'){
+      const myMass=colorMass[d.color]||0;
+      let maxOther=0;
+      for(const c in colorMass) if(c!==d.color&&colorMass[c]>maxOther) maxOther=colorMass[c];
+      const qualifies=myMass>=maxOther;
+      // Grace period after crowning: cannot be dethroned for 180 frames (3 seconds)
+      if(d._crownedAt !== undefined){
+        d._crownedAt++;
+      }
+      const inGrace = d.crowned && d._crownedAt !== undefined && d._crownedAt < 180;
+      if(!qualifies && !inGrace){
+        if(d.crowned){
+          // Was crowned, now losing crown — stop movement
+          d.vx = 0; d.vy = 0;
+        }
+        if(d.type==='emperor' && d.crowned){
+          cascadeNeutralize(d);
+          // Revert recoloured dots
+          const liveEmp = dots.find(o => !o.dead && o!==d && o.type==='emperor');
+          for(const o of dots){
+            if(o._preEmpColor===undefined) continue;
+            if(liveEmp){ o.color = liveEmp.color; }
+            else {
+              o.color = o._preEmpColor;
+              if(o._preEmpFaction){ o.faction = o._preEmpFaction; o._preEmpFaction = undefined; }
+              o._preEmpColor = undefined;
+            }
+          }
+          d.type='normal'; d.faction=null;
+          d._exEmperor = true;
+        }
+        d.crowned=false; d._crownFrames=0; d._crownedAt = undefined;
+      }
+      else if(qualifies){
+        d._crownFrames=(d._crownFrames||0)+1;
+        if(d._crownFrames>=3 && !d.crowned){
+          d.crowned=true;
+          d._crownedAt = 0;
+          // Tyrant ascends to emperor on crown (existing rule in update())
+          // Crowned rev also ascends to emperor here
+          if(d.type==='revolutionary'){
+            d.ascendToEmperor();
+          }
+        }
+      }
+    }
+  }
+  // Propagate rev-leader crowned state to all same-colour rev followers
+  {
+    const revCrowned={};
+    for(const d of dots) if(d.type==='revolutionary' && d.crowned) revCrowned[d.color]=true;
+    for(const d of dots){
+      if(d.faction==='revolutionary' && d.type==='normal') d.crowned = !!revCrowned[d.color];
+    }
+  }
+  // Propagate church-leader crowned state to all same-colour church followers
+  {
+    const churchCrowned={};
+    for(const d of dots) if(d.type==='church' && d.crowned) churchCrowned[d.color]=true;
+    for(const d of dots){
+      if(d.faction==='church' && d.type==='normal') d.crowned = !!churchCrowned[d.color];
+    }
+  }
+  // Church size derived from follower count; dies if no followers
+  {
+    const MIN_CHURCH = 8;
+    const followersByColor = {};
+    for(const d of dots){
+      if(d.dead) continue;
+      if(d.type !== 'normal') continue;
+      // Regular church followers, or empire-converted church followers
+      if(d.faction === 'church' || d._preEmpFaction === 'church'){
+        followersByColor[d.color] = (followersByColor[d.color]||0) + 1;
+      }
+    }
+    for(const d of dots){
+      if(d.dead||d.type!=='church') continue;
+      const fc = followersByColor[d.color] || 0;
+      if(fc === 0){
+        d.dead = true;
+        continue;
+      }
+      d.size = Math.max(MIN_CHURCH, Math.min(30, fc * 6));
+    }
+  }
+  // Politician follower loyalty: sync follower colour to leader, clear loyalty if leader dead
+  {
+    const polLeaders = new Map();
+    for(const d of dots) if(!d.dead && d.type==='politician' && d._polId) polLeaders.set(d._polId, d);
+    for(const d of dots){
+      if(d.dead||!d._polId) continue;
+      if(d===polLeaders.get(d._polId)) continue;
+      const leader = polLeaders.get(d._polId);
+      if(leader){
+        // Sync colour to leader
+        d.color = leader.color;
+      } else {
+        // Leader is dead — followers go neutral (they followed the man, not the idea)
+        d._polId = null;
+        d.color = 'white';
+        d.faction = null;
+        d.type = 'normal';
+        d.crowned = false;
+      }
+    }
+  }
+  ctx.fillStyle='#ECE7DF';ctx.fillRect(0,0,CW,CH);
+
+  for(const d of dots) d.update();
+
+  // Count same-colour overlapping neighbours for crowd dampening
+  for(const d of dots) d._sameColorNeighbours=0;
+  for(let i=0;i<dots.length;i++){
+    const a=dots[i]; if(a.dead) continue;
+    for(let j=i+1;j<dots.length;j++){
+      const b=dots[j]; if(b.dead||a.color!==b.color) continue;
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const md=a.size+b.size+8; // generous buffer to catch dots that just bounced apart
+      if(dx*dx+dy*dy < md*md){
+        a._sameColorNeighbours++;
+        b._sameColorNeighbours++;
+      }
+    }
+  }
+
+  collide();
+  for(const d of dots){
+    if(d.dead) continue;
+    if(d._elite) continue; // elites pass through divider walls
+    if(d._atWar) continue; // soldiers pass through divider walls
+    for(const w of walls){
+      const wx=w.x2-w.x1,wy=w.y2-w.y1,len2=wx*wx+wy*wy;
+      if(len2<1) continue;
+      let s=((d.x-w.x1)*wx+(d.y-w.y1)*wy)/len2;
+      s=Math.max(0,Math.min(1,s));
+      const cx=w.x1+s*wx,cy=w.y1+s*wy,ddx=d.x-cx,ddy=d.y-cy,dist=Math.hypot(ddx,ddy);
+      if(dist<d.size&&dist>0.0001){
+        const nx=ddx/dist,ny=ddy/dist;
+        d.x=cx+nx*d.size;d.y=cy+ny*d.size;
+        const vn=d.vx*nx+d.vy*ny;
+        if(vn<0){d.vx-=2*vn*nx;d.vy-=2*vn*ny;}
+      }
+    }
+  }
+  // ── Global brainwash: when active, everything shrinks, slows, and tints toward dominant colour
+  if(globalBrainwash){
+    if(bwSpawnSize > MIN_SZ) bwSpawnSize = Math.max(MIN_SZ, bwSpawnSize - 0.01);
+    const exempt = d => d.type==='church' || d.type==='tyrant' || d.type==='emperor' || d.type==='revolutionary' || d._elite;
+    for(const d of dots){
+      if(d.dead) continue;
+      if(exempt(d)) continue;
+      if(d.size>MIN_SZ) d.size = Math.max(MIN_SZ, d.size - 0.01);
+      d.vx *= 0.985;
+      d.vy *= 0.985;
+    }
+    // Every 2 seconds (120 frames), convert 20% of mismatched dots
+    globalBrainwashFrames = (globalBrainwashFrames||0) + 1;
+    if(globalBrainwashFrames >= 120){
+      globalBrainwashFrames = 0;
+      // Determine target: usually dominant colour, but if an elite ring exists and the only
+      // non-elite colours are whites and/or pinks (alarmists), target is elite black instead.
+      let target = domColorCache;
+      if(elites.length > 0){
+        let allWhiteOrPink = true;
+        for(const d of dots){
+          if(d.dead) continue;
+          if(d._elite) continue;
+          if(d.color === 'white' || d.color === '#ffb3de') continue;
+          allWhiteOrPink = false; break;
+        }
+        if(allWhiteOrPink) target = '#28231E';
+      }
+      // No conversion if target is white — there's no ideology to convert toward
+      if(target === 'white'){
+        // Slow/shrink still happens above; no conversion this tick
+      } else {
+      const mismatched = dots.filter(d =>
+        !d.dead &&
+        d.color !== target &&
+        !exempt(d)
+      );
+      const livingCount = dots.filter(d => !d.dead).length;
+      const toConvert = Math.min(mismatched.length, Math.ceil(livingCount * 0.05));
+      // Sort by size ascending — smaller dots get brainwashed first (easier targets)
+      mismatched.sort((a,b) => a.size - b.size);
+      for(let i=0;i<toConvert;i++){
+        // Weighted random within first half of sorted list (favours smaller)
+        const pickRange = Math.max(1, Math.ceil(mismatched.length * 0.6));
+        const idx = Math.floor(Math.random()*pickRange);
+        const d = mismatched[idx];
+        if(!d) continue;
+        d.color = target;
+        d.faction = null;
+        d.type = 'normal';
+        d._infected = false;
+        d._panicked = false;
+        d._cureTouches = null;
+        mismatched.splice(idx, 1);
+      }
+      }
+    }
+  } else {
+    globalBrainwashFrames = 0;
+    if(bwSpawnSize < 10) bwSpawnSize = Math.min(10, bwSpawnSize + 0.01);
+  }
+
+  // ── War: drafts dots aged 15-50s, sends them off-screen; 25% return after 2-5s shrunk
+  if(globalWar && draftDir){
+    warFrames++;
+    if(warFrames >= 60){
+      warFrames = 0;
+      const [wdx, wdy] = draftDir;
+      const draftable = dots.filter(d => !d.dead && !d._atWar && !d._warOff && !d._returning &&
+        !d._exEmperor &&
+        (!d._veteranUntil || performance.now() >= d._veteranUntil) &&
+        d.type==='normal' && !d._elite &&
+        d.age >= 15*60 && d.age <= 55*60);
+      for(const d of draftable){
+        d._atWar = true;
+        d._warDir = [wdx, wdy];
+        d.color = '#5C5048';
+        d.faction = null;
+        d._polId = null;
+        d.crowned = false;
+        d.vx = wdx * 4;
+        d.vy = wdy * 4;
+      }
+    }
+  }
+  // Process at-war dots regardless of toggle
+  for(const d of dots){
+    if(d.dead) continue;
+    if(d._atWar && !d._warOff){
+      let vx = d._warDir[0] * 4;
+      let vy = d._warDir[1] * 4;
+      // Look for emperors ahead and steer around them
+      for(const emp of dots){
+        if(emp.dead || emp.type!=='emperor') continue;
+        const dx = emp.x - d.x, dy = emp.y - d.y;
+        const dist = Math.hypot(dx, dy);
+        const avoidR = emp.size + d.size + 25; // wide berth
+        if(dist < avoidR && dist > 0.01){
+          // Project distance onto march direction; if emperor is roughly ahead, steer perpendicular
+          const fwd = dx*d._warDir[0] + dy*d._warDir[1];
+          if(fwd > -emp.size){
+            // Perpendicular to march direction
+            const px = -d._warDir[1], py = d._warDir[0];
+            // Side based on which side of march line emperor sits
+            const side = dx*px + dy*py;
+            const steer = side >= 0 ? -1 : 1;
+            const strength = (1 - dist/avoidR) * 5;
+            vx += px * steer * strength;
+            vy += py * steer * strength;
+          }
+        }
+      }
+      // Re-normalize to maintain consistent speed
+      const sp = Math.hypot(vx, vy) || 1;
+      d.vx = (vx/sp) * 4;
+      d.vy = (vy/sp) * 4;
+      if(d.x < -d.size || d.x > CW+d.size || d.y < -d.size || d.y > CH+d.size){
+        d._warOff = true;
+        d._warReturnAt = performance.now() + (2000 + Math.random()*3000);
+      }
+    }
+    if(d._warOff){
+      if(performance.now() >= d._warReturnAt){
+        d.dead = true;
+      }
+    }
+  }
+
+  // ── Elite: rings persist while any of their elite dots are alive
+  if(elites.length>0){
+    // Any dot now FULLY inside a ring (whole body inside) gets recruited - except politicians
+    for(const d of dots){
+      if(d.dead||d._elite||d.type==='church') continue;
+      if(d.type==='politician'||d.faction==='politician') continue;
+      for(const el of elites){
+        const dx=d.x-el.x, dy=d.y-el.y;
+        const dist=Math.hypot(dx,dy);
+        if(dist + d.size <= el.r){
+          if(d.type==='revolutionary'||d.type==='tyrant'||d.type==='emperor'){
+            cascadeNeutralize(d);
+          }
+          d.type='normal'; d.faction=null;
+          d._eliteId = el.id;
+          d._elite = true;
+          d._eliteFullyIn = true; d._infected=false; d._panicked=false; d._cureTouches=null;
+          d.color = '#28231E';
+          d.maxAge = d.age + Math.floor((90 + Math.random()*10) * 60);
+          break;
+        }
+      }
+    }
+    // Drop rings whose elite dots are all dead
+    elites = elites.filter(el => dots.some(d => !d.dead && d._eliteId === el.id));
+    // Final post-physics clamps: elites stay in, outsiders stay out
+    for(const d of dots){
+      if(d.dead) continue;
+      if(d._elite && d._eliteId){
+        const ring = elites.find(e => e.id === d._eliteId);
+        if(!ring) continue;
+        const dx = d.x - ring.x, dy = d.y - ring.y;
+        const dist = Math.hypot(dx, dy);
+        const maxR = ring.r - d.size;
+        if(dist > maxR && dist > 0.01){
+          const nx = dx/dist, ny = dy/dist;
+          d.x = ring.x + nx*maxR;
+          d.y = ring.y + ny*maxR;
+          const vn = d.vx*nx + d.vy*ny;
+          if(vn > 0){ d.vx -= (1+0.5)*vn*nx; d.vy -= (1+0.5)*vn*ny; }
+        }
+      } else if(!d._elite && d.type!=='church'){
+        const isPol = d.type==='politician'||d.faction==='politician';
+        for(const ring of elites){
+          const dx = d.x - ring.x, dy = d.y - ring.y;
+          const dist = Math.hypot(dx, dy);
+          if(isPol){
+            // Politicians always bounce off AND convert to elite-aligned
+            const minR = ring.r + d.size;
+            if(dist < minR && dist > 0.01){
+              const nx = dx/dist, ny = dy/dist;
+              d.x = ring.x + nx*minR;
+              d.y = ring.y + ny*minR;
+              const vn = d.vx*nx + d.vy*ny;
+              if(vn < 0){ d.vx -= 2*vn*nx; d.vy -= 2*vn*ny; }
+              if(!d._eliteAligned){
+                d.color = '#28231E';
+                d.faction = 'elite';
+                d._eliteAligned = true;
+              }
+              break;
+            }
+          } else {
+            // Non-politicians: recruit when fully inside
+            if(dist + d.size <= ring.r){
+              if(d.type==='revolutionary'||d.type==='tyrant'||d.type==='emperor'){
+                cascadeNeutralize(d);
+              }
+              d.type='normal'; d.faction=null;
+              d._eliteId = ring.id;
+              d._elite = true;
+              d._eliteFullyIn = true; d._infected=false; d._panicked=false; d._cureTouches=null;
+              d.color = '#28231E';
+              d.maxAge = d.age + Math.floor((90 + Math.random()*10) * 60);
+              break;
+            }
+          }
+        }
+      }
+    }
+    // Outsiders shrink while any ring exists (elites outside their ring also shrink; elite-aligned and emperors exempt)
+    if(elites.length>0){
+      for(const d of dots){
+        if(d.dead||d.type==='church') continue;
+        if(isEliteInRing(d)) continue;
+        if(d.faction==='elite') continue;
+        if(d.type==='emperor') continue;
+        if(d.type==='tyrant' && d.crowned) continue;
+        if(d.type==='revolutionary' && d.crowned) continue;
+        if(d.size>MIN_SZ) d.size=Math.max(MIN_SZ, d.size-0.0033);
+      }
+      // Spawn size also decays at same rate
+      if(spawnSize>MIN_SZ) spawnSize=Math.max(MIN_SZ, spawnSize-0.0033);
+      // Persistent elite conversion — every 120 frames (2 sec)
+      eliteFrames = (eliteFrames||0) + 1;
+      if(eliteFrames >= 120){
+        eliteFrames = 0;
+        const isExempt = d => d.dead || d.type==='church' || isEliteInRing(d) || d.faction==='elite' || d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned) || d._infected;
+        const eligible = dots.filter(d => !isExempt(d));
+        // Convert non-whites to white; smaller dots picked first (weighted)
+        const nonWhites = eligible.filter(d => d.color !== 'white');
+        if(nonWhites.length > 0){
+          const toConvert = Math.ceil(eligible.length * 0.05);
+          nonWhites.sort((a,b) => a.size - b.size);
+          for(let i=0;i<Math.min(toConvert, nonWhites.length);i++){
+            const pickRange = Math.max(1, Math.ceil(nonWhites.length * 0.6));
+            const idx = Math.floor(Math.random()*pickRange);
+            const d = nonWhites[idx];
+            if(!d) continue;
+            d.color = 'white'; d.faction = null; d.type = 'normal';
+            d._infected = false; d._panicked = false; d._cureTouches = null;
+            d.crowned = false;
+            nonWhites.splice(idx, 1);
+          }
+        }
+      }
+    } else {
+      eliteFrames = 0;
+    }
+  }
+  // Restore spawn size when no rings exist
+  if(elites.length===0 && spawnSize<10){
+    spawnSize=Math.min(10, spawnSize+0.01);
+  }
+
+  // If an emperor died this frame, revert recoloured dots
+  {
+    const deadEmperors = dots.filter(d => d.dead && d.type==='emperor');
+    if(deadEmperors.length > 0){
+      // Check if there's any other live emperor to inherit; if so, just keep recolour to that emperor's colour
+      const liveEmp = dots.find(d => !d.dead && d.type==='emperor');
+      for(const o of dots){
+        if(o._preEmpColor===undefined) continue;
+        if(liveEmp){
+          o.color = liveEmp.color; // re-recolour to the surviving emperor
+        } else {
+          o.color = o._preEmpColor;
+          if(o._preEmpFaction){
+            o.faction = o._preEmpFaction;
+            o._preEmpFaction = undefined;
+          }
+          o._preEmpColor = undefined;
+        }
+      }
+    }
+  }
+  if(dots.some(d=>d.dead)) dots=dots.filter(d=>!d.dead);
+  for(const d of dots) d.draw(t);
+  // Walls — clean thin lines (skipping inside any elite ring)
+  ctx.save();
+  // Build a clip path covering the whole canvas EXCEPT elite ring interiors
+  if(elites.length > 0){
+    ctx.beginPath();
+    ctx.rect(0, 0, CW, CH);
+    for(const el of elites){
+      // Subtract circle via counter-clockwise arc
+      ctx.moveTo(el.x + el.r, el.y);
+      ctx.arc(el.x, el.y, el.r, 0, Math.PI*2, true);
+    }
+    ctx.clip('evenodd');
+  }
+  ctx.strokeStyle='rgba(58,55,53,0.35)';
+  ctx.lineWidth=0.75;
+  ctx.lineCap='round';
+  for(const w of walls){
+    ctx.beginPath();
+    ctx.moveTo(w.x1,w.y1);
+    ctx.lineTo(w.x2,w.y2);
+    ctx.stroke();
+  }
+  ctx.restore();
+  if(drawingWall&&wallStart&&wallPreview){
+    ctx.strokeStyle='#3A3735AA';ctx.lineWidth=2;ctx.setLineDash([6,6]);
+    ctx.beginPath();ctx.moveTo(wallStart.x,wallStart.y);ctx.lineTo(wallPreview.x,wallPreview.y);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.lineCap='butt';
+  drawFX();checkWin();
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+document.getElementById('begin-btn').addEventListener('click',()=>{
+  document.getElementById('start-overlay').style.display='none'; startGame();
+});
+document.getElementById('begin-btn').addEventListener('touchend',e=>{
+  e.preventDefault();
+  document.getElementById('start-overlay').style.display='none'; startGame();
+},{passive:false});
+
+sizeCanvas();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
