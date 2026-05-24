@@ -117,7 +117,7 @@ body{
 
 <div class="bbar" id="birthbar">
   <span class="bb-label">Birthrate</span>
-  <input type="range" id="birth-slider" min="0" max="600" value="30" />
+  <input type="range" id="birth-slider" min="0" max="600" value="60" />
 </div>
 <div class="bbar" style="border-top:none;">
   <span class="bb-label">Lifespan</span>
@@ -179,7 +179,7 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', size
 
 // ── Constants ────────────────────────────────────────────────
 const MIN_SZ=4, MAX_SZ=70, SHRINK=2, GROW=2, BOUNCE=0.82, EMP_SIZE=36;
-let birthRate=30, birthFrames=0, actionRate=1, paused=false, lifeSeconds=60, spawnSize=10;
+let birthRate=60, birthFrames=0, actionRate=1, paused=false, lifeSeconds=60, spawnSize=10;
 
 // ── Palettes ─────────────────────────────────────────────────
 const POL_PALETTE = ['#C4A24E'];
@@ -559,9 +559,9 @@ function startGame() {
     d.age = Math.floor(Math.random() * expectedLife * 0.6);
     dots.push(d);
   };
-  for(let i=0;i<5;i++) place('red');
-  for(let i=0;i<5;i++) place('blue');
-  for(let i=0;i<20;i++) place('white');
+  for(let i=0;i<15;i++) place('red');
+  for(let i=0;i<15;i++) place('blue');
+  for(let i=0;i<30;i++) place('white');
   running=true;
 }
 
