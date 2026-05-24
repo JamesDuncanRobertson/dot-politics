@@ -130,21 +130,22 @@ body{
 <div id="bottom">
   <div class="btn-row">
     <button class="act-btn" id="pol-btn">Politician</button>
-    <button class="act-btn" id="church-btn">Church</button>
+    <button class="act-btn" id="plague-btn">Alarmist</button>
     <button class="act-btn" id="red-btn" style="color:var(--red);">Red</button>
     <button class="act-btn" id="cit-btn">Citizen</button>
     <button class="act-btn" id="blue-btn" style="color:var(--blue);">Blue</button>
     <button class="act-btn" id="emp-btn">Tyrant</button>
-    <button class="act-btn" id="rev-btn">Revolution</button>
+    <button class="act-btn" id="elite-btn">Elite</button>
   </div>
   <div class="btn-row">
-    <button class="act-btn" id="plague-btn">Alarmist</button>
-    <button class="act-btn" id="disaster-btn">Disaster</button>
-    <button class="act-btn" id="div-btn">Division</button>
-    <button class="act-btn" id="elite-btn">Elite</button>
-    <button class="act-btn" id="unify-btn">Unity</button>
     <button class="act-btn" id="war-btn">War</button>
     <button class="act-btn" id="brain-btn">Brainwash</button>
+    <button class="act-btn" id="church-btn">Church</button>
+    <button class="act-btn" id="div-btn">Division</button>
+    <button class="act-btn" id="unify-btn">Unity</button>
+    <button class="act-btn" id="rev-btn">Revolution</button>
+    <button class="act-btn" id="disaster-btn">Disaster</button>
+    <button class="act-btn" id="demor-btn">Demoralise</button>
   </div>
 </div>
 
@@ -439,7 +440,9 @@ class Dot {
   draw(t) {
     if(this._inChurch) return; // hidden inside church
     if(this._warOff) return; // off-screen at war
-    const target=getDisplay(this.color);
+    const target = (this._demoralized && this._flashColor)
+      ? getDisplay(this._flashColor)
+      : getDisplay(this.color);
     const tf=parseRGB(target.fill), ts=parseRGB(target.stroke);
     const k=0.18; // ease factor — ~5 frames to settle, 200ms at 60fps
     this._dispFill[0]+=(tf[0]-this._dispFill[0])*k;
@@ -514,6 +517,7 @@ let domPctCache=0; // cached dominance fraction (0–1)
 let elites=[]; // { x, y, r } — elite zones, dots inside go black & immune, dots outside slowly shrink
 let eliteFrames=0; // tick counter for persistent elite conversion
 let globalBrainwash=false; // global brainwash toggle
+let globalDemoralize=false; // global demoralise toggle
 let globalBrainwashFrames=0;
 let globalWar=false; // war toggle
 let warFrames=0;
@@ -530,6 +534,7 @@ function startGame() {
   brainwashers=[]; domColorCache='white';
   elites=[]; spawnSize=10;
   globalBrainwash=false;
+  globalDemoralize=false;
   bwSpawnSize=10;
   globalWar=false;
   warFrames=0;
@@ -540,6 +545,7 @@ function startGame() {
   pendingWin = null;
   eliteStableFrames = 0;
   document.getElementById('brain-btn')?.classList.remove('active');
+  document.getElementById('demor-btn')?.classList.remove('active');
   document.getElementById('div-btn').classList.remove('active');
   document.getElementById('elite-btn')?.classList.remove('active');
   document.getElementById('church-btn')?.classList.remove('active');
@@ -653,7 +659,9 @@ document.getElementById('pol-btn').addEventListener('click',()=>{
   if(!running) return;
   buttonsUsed.add('pol');
   const col=POL_PALETTE[polIdx%POL_PALETTE.length]; polIdx++;
-  const newPol = new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'politician','politician');
+  const sx = globalDemoralize ? CW/2 : CW*.1+Math.random()*CW*.8;
+  const sy = globalDemoralize ? CH/2 : CH*.1+Math.random()*CH*.8;
+  const newPol = new Dot(sx, sy, col,'politician','politician');
   newPol._polId = Symbol('pol');
   newPol.size = Math.max(newPol.size, medianCitizenSize() * 1.1);
   dots.push(newPol);
@@ -892,6 +900,26 @@ document.getElementById('birth-slider').addEventListener('input',e=>{ birthRate=
 document.getElementById('action-slider').addEventListener('input',e=>{ actionRate=+e.target.value; });
 document.getElementById('life-slider').addEventListener('input',e=>{ lifeSeconds=+e.target.value; });
 
+document.getElementById('demor-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('demoralise');
+  globalDemoralize = !globalDemoralize;
+  document.getElementById('demor-btn').classList.toggle('active', globalDemoralize);
+  if(!globalDemoralize){
+    // Toggle OFF: snapshot whatever flash colour each demoralised dot has as their new real colour
+    for(const d of dots){
+      if(d._demoralized){
+        if(d._flashColor){
+          d.color = d._flashColor;
+        }
+        d._demoralized = false;
+        d._flashColor = null;
+        d._flashUntil = 0;
+      }
+    }
+  }
+});
+
 document.getElementById('brain-btn').addEventListener('click',()=>{
   if(!running) return;
   buttonsUsed.add('brain');
@@ -970,6 +998,13 @@ function politicize(d,toColor,leader){
   if(d.faction==='politician'){ d.color=toColor; return; }
   d.color=toColor; d.faction='politician'; d.type='normal';
   d.crowned=false;
+  // Free from demoralisation
+  if(d._demoralized){
+    d._demoralized = false;
+    d._flashColor = null;
+    d._flashUntil = 0;
+    d._ringR = undefined;
+  }
   // Inherit politician ID from leader (or any politician follower as proxy)
   if(leader){
     if(leader._polId) d._polId = leader._polId;
@@ -993,6 +1028,13 @@ function cyanize(d,toColor){
   if(d.faction==='politician'){ d.color=toColor; return; }
   d.color=toColor; d.faction='revolutionary'; d.type='normal';
   d.crowned=false;
+  // Free from demoralisation
+  if(d._demoralized){
+    d._demoralized = false;
+    d._flashColor = null;
+    d._flashUntil = 0;
+    d._ringR = undefined;
+  }
   // growth applied by caller via tryGrow
 }
 function boostConvert(d){
@@ -1064,14 +1106,14 @@ function collide(){
       // Emperors kill alarmists outright on direct contact
       if(a.type==='emperor' && b._infected){ b.dead=true; continue; }
       if(b.type==='emperor' && a._infected){ a.dead=true; continue; }
-      if(a._infected && a._panicked && !b._infected && !b._elite && !b._bwT && !isAlarmImmune(b) && b.type!=='tyrant'){
+      if(a._infected && a._panicked && !a._demoralized && !b._infected && !b._elite && !b._bwT && !isAlarmImmune(b) && b.type!=='tyrant'){
         b._infected = true; b._panicked = true; b._infectedFrames = 0;
         b.color = '#ffb3de'; b.faction = null; b.type = 'normal';
         b.size = Math.max(MIN_SZ, b.size - 5/b.size);
         const sp = Math.hypot(b.vx,b.vy)||0.1;
         b.vx = b.vx/sp * 4; b.vy = b.vy/sp * 4;
         a._panicked = false;
-      } else if(b._infected && b._panicked && !a._infected && !a._elite && !a._bwT && !isAlarmImmune(a) && a.type!=='tyrant'){
+      } else if(b._infected && b._panicked && !b._demoralized && !a._infected && !a._elite && !a._bwT && !isAlarmImmune(a) && a.type!=='tyrant'){
         a._infected = true; a._panicked = true; a._infectedFrames = 0;
         a.color = '#ffb3de'; a.faction = null; a.type = 'normal';
         a.size = Math.max(MIN_SZ, a.size - 5/a.size);
@@ -1225,6 +1267,10 @@ function applyConversion(a,b){
   if(isEliteInRing(a)||isEliteInRing(b)) return;
   // Soldiers are inert: no conversion either way while at war
   if(a._atWar || b._atWar) return;
+  // Demoralised dots cannot spread anything — block conversion if the larger dot is demoralised
+  // (the smaller dot can still be converted BY a non-demoralised actor)
+  const lgInit = a.size >= b.size ? a : b;
+  if(lgInit._demoralized) return;
   // Ex-emperor: every contact shrinks it more aggressively; dies when small
   if(a._exEmperor){
     a.size = Math.max(MIN_SZ, a.size - 0.5);
@@ -1305,6 +1351,12 @@ function applyConversion(a,b){
     }
     // Follower: any non-flock contact sends them to the church leader (never converts)
     if(ch.type==='normal' && ch.faction==='church'){
+      // Special: demoralised dots are susceptible to direct missionary conversion (mass check still applies)
+      if(ot._demoralized && canConvert && ot.type==='normal' && ot.type!=='tyrant'){
+        ot.color = ch.color; ot.faction = 'church'; ot.type = 'normal';
+        ot._demoralized = false; ot._flashColor = null; ot._flashUntil = 0; ot._ringR = undefined;
+        return;
+      }
       const isNonFlock = (ot.faction !== 'church') && (ot.type !== 'church');
       if(isNonFlock && !ot._infected && ot.type!=='tyrant' && ot.type!=='politician' && ot.faction!=='politician'){
         const leader = dots.find(d => !d.dead && d.type==='church' && d.color===ch.color);
@@ -1666,19 +1718,22 @@ function checkWin(){
   if(total>=5){
     if(dots.every(d=>d.faction==='church'||d.type==='church')){endGame('Theocracy. Great.','#7A9468',`${total} faithful`);return;}
 
-      // Elite win: elite ring mass ≥ 60 AND no outsider is size ≥ 8
+      // Elite win: elite ring mass ≥ 60 AND no outsider is size ≥ 8 AND no rival emperor/crowned leader exists
       if(elites.length > 0){
         let eliteMass = 0;
         let bigOutsider = false;
+        let rivalLeader = false;
         for(const d of dots){
           if(d.dead) continue;
           if(d._elite && isEliteInRing(d)){ eliteMass += d.size; continue; }
           if(isEliteInRing(d)) continue;
-          if(d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned)) continue;
+          if(d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned)){
+            rivalLeader = true; break;
+          }
           if(d.type==='church') continue;
           if(d.size >= 8){ bigOutsider = true; break; }
         }
-        if(eliteMass >= 60 && !bigOutsider){
+        if(eliteMass >= 60 && !bigOutsider && !rivalLeader){
           endGame('Elites took over','#28231E',`Total ${total}`);
           return;
         }
@@ -2041,6 +2096,7 @@ function loop(t){
     if(d.dead) continue;
     if(d._elite) continue; // elites pass through divider walls
     if(d._atWar) continue; // soldiers pass through divider walls
+    if(d._demoralized) continue; // demoralised dots ignore divider walls
     for(const w of walls){
       const wx=w.x2-w.x1,wy=w.y2-w.y1,len2=wx*wx+wy*wy;
       if(len2<1) continue;
@@ -2117,6 +2173,51 @@ function loop(t){
     if(bwSpawnSize < 10) bwSpawnSize = Math.min(10, bwSpawnSize + 0.01);
   }
 
+  // ── Global demoralise: eligible dots orbit a ring around centre, flashing colours cosmetically
+  if(globalDemoralize){
+    const cx = CW/2, cy = CH/2;
+    const ringMid = Math.min(CW, CH) * 0.38; // donut centreline radius
+    const _now = performance.now();
+    const exempt = d => d.type==='church' || d.type==='tyrant' || d.type==='emperor' || d.type==='revolutionary' || d._elite || d._atWar || d._warOff || d._inChurch || d.dead;
+    for(const d of dots){
+      if(exempt(d)) continue;
+      d._demoralized = true;
+      // Compute angle from centre to dot
+      const ddx = d.x - cx, ddy = d.y - cy;
+      const ang = Math.atan2(ddy, ddx);
+      // Target radius: ring centreline (could vary per dot for thickness)
+      if(d._ringR === undefined){
+        d._ringR = ringMid + (Math.random()-0.5) * 80; // thickness of donut, ~±40
+      }
+      const tx = cx + Math.cos(ang) * d._ringR;
+      const ty = cy + Math.sin(ang) * d._ringR;
+      // Ease position toward ring (slow drift in)
+      d.x += (tx - d.x) * 0.02;
+      d.y += (ty - d.y) * 0.02;
+      // Tangential velocity: perpendicular to radial direction, counter-clockwise
+      const tanX = -Math.sin(ang);
+      const tanY = Math.cos(ang);
+      const targetSp = 0.8;
+      const targetVx = tanX * targetSp;
+      const targetVy = tanY * targetSp;
+      d.vx += (targetVx - d.vx) * 0.05;
+      d.vy += (targetVy - d.vy) * 0.05;
+      // Flashing: pick a new random colour every ~500ms
+      if(!d._flashUntil || _now > d._flashUntil){
+        const pool = ['red', 'blue', 'white'];
+        d._flashColor = pool[Math.floor(Math.random()*3)];
+        d._flashUntil = _now + 400 + Math.random()*300;
+      }
+    }
+  } else {
+    // Clear per-dot ring assignment when toggle is off (will reassign on next on)
+    if(dots.some(d=>d._ringR !== undefined)){
+      for(const d of dots){
+        d._ringR = undefined;
+      }
+    }
+  }
+
   // ── War: drafts dots aged 15-50s, sends them off-screen; 25% return after 2-5s shrunk
   if(globalWar && draftDir){
     warFrames++;
@@ -2129,6 +2230,14 @@ function loop(t){
         d.type==='normal' && !d._elite &&
         d.age >= 15*60 && d.age <= 55*60);
       for(const d of draftable){
+        // If demoralised, snapshot the flash colour as real colour before draft (so it sticks if they return)
+        if(d._demoralized){
+          if(d._flashColor) d.color = d._flashColor;
+          d._demoralized = false;
+          d._flashColor = null;
+          d._flashUntil = 0;
+          d._ringR = undefined;
+        }
         d._atWar = true;
         d._warDir = [wdx, wdy];
         d.color = '#5C5048';
