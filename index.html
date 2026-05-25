@@ -48,7 +48,7 @@ body{
 .btn-row{height:44px;display:flex;border-bottom:1px solid var(--rule);}
 .btn-row:last-child{border-bottom:none;}
 #birthbar, .bbar{display:flex;align-items:center;gap:12px;padding:6px 18px;border-top:1px solid var(--rule);flex-shrink:0;}
-.bb-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);font-weight:400;min-width:50px;}
+.bb-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);font-weight:400;width:60px;flex-shrink:0;}
 #birth-slider, #action-slider, #life-slider{flex:1;-webkit-appearance:none;appearance:none;background:transparent;height:18px;cursor:pointer;}
 #birth-slider::-webkit-slider-runnable-track, #action-slider::-webkit-slider-runnable-track, #life-slider::-webkit-slider-runnable-track{height:1px;background:var(--mid);}
 #birth-slider::-webkit-slider-thumb, #action-slider::-webkit-slider-thumb, #life-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:var(--text);margin-top:-6px;cursor:pointer;}
@@ -117,7 +117,7 @@ body{
 
 <div class="bbar" id="birthbar">
   <span class="bb-label">Birthrate</span>
-  <input type="range" id="birth-slider" min="0" max="600" value="60" />
+  <input type="range" id="birth-slider" min="0" max="120" value="60" />
 </div>
 <div class="bbar" style="border-top:none;">
   <span class="bb-label">Lifespan</span>
@@ -125,27 +125,35 @@ body{
 </div>
 <div class="bbar" style="border-top:none;">
   <span class="bb-label">Activity</span>
-  <input type="range" id="action-slider" min="0.25" max="3" step="0.05" value="1" />
+  <input type="range" id="action-slider" min="-2" max="2" step="0.1" value="0" />
 </div>
 <div id="bottom">
   <div class="btn-row">
-    <button class="act-btn" id="pol-btn">Politician</button>
-    <button class="act-btn" id="plague-btn">Alarmist</button>
+    <button class="act-btn" id="pol-r-btn" style="color:var(--red);">Politician</button>
     <button class="act-btn" id="red-btn" style="color:var(--red);">Red</button>
     <button class="act-btn" id="cit-btn">Citizen</button>
     <button class="act-btn" id="blue-btn" style="color:var(--blue);">Blue</button>
+    <button class="act-btn" id="pol-b-btn" style="color:var(--blue);">Politician</button>
+  </div>
+  <div class="btn-row">
+    <button class="act-btn" id="populist-btn">Populist</button>
+    <button class="act-btn" id="plague-btn">Alarmist</button>
+    <button class="act-btn" id="rev-btn">Revolutionary</button>
+    <button class="act-btn" id="church-btn">Church</button>
     <button class="act-btn" id="emp-btn">Tyrant</button>
+    <button class="act-btn" id="thug-btn">Thugs</button>
     <button class="act-btn" id="elite-btn">Elite</button>
   </div>
   <div class="btn-row">
+    <button class="act-btn" id="media-btn">Media</button>
     <button class="act-btn" id="war-btn">War</button>
-    <button class="act-btn" id="brain-btn">Brainwash</button>
-    <button class="act-btn" id="church-btn">Church</button>
+    <button class="act-btn" id="disaster-btn">Disaster</button>
+    <button class="act-btn" id="depression-btn">Depression</button>
     <button class="act-btn" id="div-btn">Division</button>
     <button class="act-btn" id="unify-btn">Unity</button>
-    <button class="act-btn" id="rev-btn">Revolution</button>
-    <button class="act-btn" id="disaster-btn">Disaster</button>
+    <button class="act-btn" id="brain-btn">Brainwash</button>
     <button class="act-btn" id="demor-btn">Demoralise</button>
+    <button class="act-btn" id="chaos-btn">Chaos</button>
   </div>
 </div>
 
@@ -182,7 +190,7 @@ const MIN_SZ=4, MAX_SZ=70, SHRINK=2, GROW=2, BOUNCE=0.82, EMP_SIZE=36;
 let birthRate=60, birthFrames=0, actionRate=1, paused=false, lifeSeconds=60, spawnSize=10;
 
 // ── Palettes ─────────────────────────────────────────────────
-const POL_PALETTE = ['#C4A24E'];
+const POL_PALETTE = ['#C4A24E','#B58656','#A89060'];
 const REV_PALETTE = ['#5A9FA4','#7A9ABF','#9A7ABF','#7ABF9A','#BF9A7A','#9ABF7A'];
 const EMP_PALETTE = ['#7A5E8A','#8A5E6A','#5E7A66','#5E6A8A','#8A6E5E','#6A6E78'];
 let polIdx = 0, revIdx = 0, empIdx = 0, churchCornerIdx = 0;
@@ -342,6 +350,11 @@ class Dot {
     } else if(this._elite){
       this._eliteRipeFrames = (this._eliteRipeFrames || 0) + 1;
     }
+    if(this.type==='media'){
+      this.vx=0; this.vy=0;
+      // Lifespan: media is permanent (no natural death)
+      return;
+    }
     if(this.type==='church'){
       this.vx=0; this.vy=0;
       let fc=0;
@@ -401,9 +414,14 @@ class Dot {
         this._wasRev = true; this._revOrigin = false;
       }
     }
-    this.x+=this.vx*actionRate; this.y+=this.vy*actionRate;
+    if(this.type !== 'emperor' && !(this.type === 'tyrant' && this.crowned)){
+      this.x+=this.vx*actionRate; this.y+=this.vy*actionRate;
+    }
     if(this.crowned && !(this.type==='normal' && (this.faction==='revolutionary' || this.faction==='church'))){
       this.vx=0; this.vy=0;
+    }
+    if(this.type==='emperor'){
+      this.vx=0; this.vy=0; // emperor position completely locked
     }
     if(this.type!=='tyrant' && this.type!=='emperor'){
       this.size=Math.max(MIN_SZ,Math.min(MAX_SZ,this.size));
@@ -440,9 +458,11 @@ class Dot {
   draw(t) {
     if(this._inChurch) return; // hidden inside church
     if(this._warOff) return; // off-screen at war
-    const target = (this._demoralized && this._flashColor)
-      ? getDisplay(this._flashColor)
-      : getDisplay(this.color);
+    const target = (this._chaosFlashColor)
+      ? getDisplay(this._chaosFlashColor)
+      : (this._demoralized && this._flashColor)
+        ? getDisplay(this._flashColor)
+        : getDisplay(this.color);
     const tf=parseRGB(target.fill), ts=parseRGB(target.stroke);
     const k=0.18; // ease factor — ~5 frames to settle, 200ms at 60fps
     this._dispFill[0]+=(tf[0]-this._dispFill[0])*k;
@@ -452,8 +472,8 @@ class Dot {
     this._dispStroke[1]+=(ts[1]-this._dispStroke[1])*k;
     this._dispStroke[2]+=(ts[2]-this._dispStroke[2])*k;
     let fill, stroke;
-    if(this._infected){
-      // Soft pink ffb3de
+    if(this._infected && this.color === '#ffb3de'){
+      // Unrecruited alarmists render explicit pink
       fill='rgb(255,179,222)';
       stroke='rgb(200,130,180)';
     } else {
@@ -518,6 +538,8 @@ let elites=[]; // { x, y, r } — elite zones, dots inside go black & immune, do
 let eliteFrames=0; // tick counter for persistent elite conversion
 let globalBrainwash=false; // global brainwash toggle
 let globalDemoralize=false; // global demoralise toggle
+let globalDepression=false; // global depression toggle
+let globalChaos=false; // global chaos toggle
 let globalBrainwashFrames=0;
 let globalWar=false; // war toggle
 let warFrames=0;
@@ -525,6 +547,10 @@ let draftDir=null; // [dx,dy] locked for current draft
 let bwSpawnSize=10; // spawn size while brainwash active, shrinks alongside dots
 
 function startGame() {
+  if(typeof winAutoRestartTimer !== 'undefined' && winAutoRestartTimer){
+    clearTimeout(winAutoRestartTimer);
+    winAutoRestartTimer = null;
+  }
   document.getElementById('win-overlay').style.display='none';
   sizeCanvas();
   dots=[]; fx=[]; polIdx=0; revIdx=0; empIdx=0; churchCornerIdx=0;
@@ -535,6 +561,8 @@ function startGame() {
   elites=[]; spawnSize=10;
   globalBrainwash=false;
   globalDemoralize=false;
+  globalChaos=false;
+  globalDepression=false;
   bwSpawnSize=10;
   globalWar=false;
   warFrames=0;
@@ -546,6 +574,9 @@ function startGame() {
   eliteStableFrames = 0;
   document.getElementById('brain-btn')?.classList.remove('active');
   document.getElementById('demor-btn')?.classList.remove('active');
+  document.getElementById('depression-btn')?.classList.remove('active');
+  document.getElementById('media-btn')?.classList.remove('active');
+  document.getElementById('chaos-btn')?.classList.remove('active');
   document.getElementById('div-btn').classList.remove('active');
   document.getElementById('elite-btn')?.classList.remove('active');
   document.getElementById('church-btn')?.classList.remove('active');
@@ -649,28 +680,40 @@ document.getElementById('red-btn').addEventListener('click',()=>setPlayer('red')
 document.getElementById('blue-btn').addEventListener('click',()=>setPlayer('blue'));
 document.getElementById('cit-btn').addEventListener('click',()=>setPlayer('white'));
 function medianCitizenSize(){
-  const sizes = dots.filter(d => !d.dead && d.type==='normal' && !d._elite && !d._infected).map(d => d.size);
+  // Returns the MODE of citizen sizes (rounded to nearest integer for binning)
+  const sizes = dots.filter(d => !d.dead && d.type==='normal' && !d._elite && !d._infected).map(d => Math.round(d.size));
   if(sizes.length === 0) return 10;
-  sizes.sort((a,b)=>a-b);
-  const mid = Math.floor(sizes.length/2);
-  return sizes.length % 2 === 0 ? (sizes[mid-1]+sizes[mid])/2 : sizes[mid];
+  const counts = {};
+  let bestBin = sizes[0], bestCount = 0;
+  for(const s of sizes){
+    counts[s] = (counts[s]||0) + 1;
+    if(counts[s] > bestCount){ bestCount = counts[s]; bestBin = s; }
+  }
+  return bestBin;
 }
-document.getElementById('pol-btn').addEventListener('click',()=>{
+function spawnPolitician(col){
   if(!running) return;
   buttonsUsed.add('pol');
-  const col=POL_PALETTE[polIdx%POL_PALETTE.length]; polIdx++;
   const sx = globalDemoralize ? CW/2 : CW*.1+Math.random()*CW*.8;
   const sy = globalDemoralize ? CH/2 : CH*.1+Math.random()*CH*.8;
   const newPol = new Dot(sx, sy, col,'politician','politician');
   newPol._polId = Symbol('pol');
   newPol.size = Math.max(newPol.size, medianCitizenSize() * 1.1);
   dots.push(newPol);
+}
+document.getElementById('pol-r-btn').addEventListener('click',()=>{ spawnPolitician('red'); });
+document.getElementById('pol-b-btn').addEventListener('click',()=>{ spawnPolitician('blue'); });
+document.getElementById('populist-btn').addEventListener('click',()=>{
+  const col=POL_PALETTE[polIdx%POL_PALETTE.length]; polIdx++;
+  spawnPolitician(col);
 });
 document.getElementById('rev-btn').addEventListener('click',()=>{
   if(!running) return;
   buttonsUsed.add('rev');
   const col=REV_PALETTE[revIdx%REV_PALETTE.length]; revIdx++;
-  dots.push(new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'revolutionary','revolutionary'));
+  const newRev = new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'revolutionary','revolutionary');
+  newRev.size = Math.max(newRev.size, medianCitizenSize() * 0.7);
+  dots.push(newRev);
 });
 document.getElementById('elite-btn').addEventListener('click',()=>{
   if(!running) return;
@@ -696,8 +739,8 @@ document.getElementById('elite-btn').addEventListener('click',()=>{
   const eliteId = Symbol('elite');
   for(const d of dots){
     if(d.dead||d.type==='church') continue;
-    if(d.type==='politician'||d.faction==='politician'){
-      // Politicians convert via contact with the ring, not at spawn — skip them here
+    if(d.type==='politician' || (d._infected && d.type==='normal')){
+      // Politician leaders and alarmists bounce off, not recruited
       continue;
     }
     const dx=d.x-cx, dy=d.y-cy;
@@ -711,6 +754,8 @@ document.getElementById('elite-btn').addEventListener('click',()=>{
       d._elite = true;
       d._eliteFullyIn = true; d._infected=false; d._panicked=false; d._cureTouches=null;
       d.color = '#28231E';
+      d._chaosFlashColor = undefined; d._chaosFlashUntil = 0;
+      d._demoralized = false; d._flashColor = null; d._flashUntil = 0; d._ringR = undefined;
       d.maxAge = d.age + Math.floor((90 + Math.random()*10) * 60);
     }
   }
@@ -734,7 +779,9 @@ document.getElementById('emp-btn').addEventListener('click',()=>{
   if(!running) return;
   buttonsUsed.add('tyrant');
   const col=EMP_PALETTE[empIdx%EMP_PALETTE.length]; empIdx++;
-  const newTy = new Dot(CW*.1+Math.random()*CW*.8, CH*.1+Math.random()*CH*.8, col,'tyrant', null);
+  const sx = globalDemoralize ? CW/2 : CW*.1+Math.random()*CW*.8;
+  const sy = globalDemoralize ? CH/2 : CH*.1+Math.random()*CH*.8;
+  const newTy = new Dot(sx, sy, col,'tyrant', null);
   newTy.size = Math.max(newTy.size, medianCitizenSize() * 1.1);
   dots.push(newTy);
 });
@@ -810,14 +857,14 @@ document.getElementById('div-btn').addEventListener('click',()=>{
   if(!running) return;
   buttonsUsed.add('div');
   if(!regions) initRegions();
-  // Weighted-random pick: probability proportional to region area (balanced subdivision)
-  const totalArea = regions.reduce((s,r) => s + r.w*r.h, 0);
-  let pick = Math.random() * totalArea;
-  let idx = 0;
-  for(let i=0;i<regions.length;i++){
-    pick -= regions[i].w * regions[i].h;
-    if(pick <= 0){ idx = i; break; }
+  // Always pick the LARGEST region first; ties broken randomly
+  let maxArea = 0;
+  for(const r of regions){
+    const a = r.w * r.h;
+    if(a > maxArea) maxArea = a;
   }
+  const largest = regions.filter(r => r.w*r.h >= maxArea - 0.01);
+  const idx = regions.indexOf(largest[Math.floor(Math.random()*largest.length)]);
   const r = regions[idx];
   // Bisect perpendicular to longer axis; random tie-break
   const vertical = r.w > r.h ? true : r.h > r.w ? false : Math.random() < 0.5;
@@ -897,8 +944,89 @@ document.getElementById('pause-btn').addEventListener('click',()=>{
   document.getElementById('pause-btn').textContent = paused ? '▶' : '⏸';
 });
 document.getElementById('birth-slider').addEventListener('input',e=>{ birthRate=+e.target.value; });
-document.getElementById('action-slider').addEventListener('input',e=>{ actionRate=+e.target.value; });
+document.getElementById('action-slider').addEventListener('input',e=>{ actionRate = Math.pow(2, +e.target.value); });
 document.getElementById('life-slider').addEventListener('input',e=>{ lifeSeconds=+e.target.value; });
+
+document.getElementById('thug-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('thug');
+  const livePop = dots.filter(d => !d.dead && d.type!=='church' && !d._inChurch && !d._warOff);
+  const count = Math.max(1, Math.ceil(livePop.length * 0.03));
+  const dom = domColorCache || 'white';
+  const sz = Math.max(10, medianCitizenSize() * 1.1);
+  for(let i=0;i<count;i++){
+    const x = CW*.1 + Math.random()*CW*.8;
+    const y = CH*.1 + Math.random()*CH*.8;
+    const d = new Dot(x, y, dom);
+    d.type = 'thug';
+    d.faction = null;
+    d.size = sz;
+    dots.push(d);
+  }
+});
+document.getElementById('media-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('media');
+  // Toggle off: if any media dots exist, kill them all
+  const existing = dots.filter(d => !d.dead && d.type==='media');
+  if(existing.length > 0){
+    for(const m of existing){ m.dead = true; }
+    document.getElementById('media-btn').classList.remove('active');
+    return;
+  }
+  // Spawn 4 in quartile centroids
+  const dom = domColorCache || 'white';
+  const sz = Math.max(20, medianCitizenSize() * 2);
+  const quartiles = [
+    { x: CW*0.25, y: CH*0.25 },
+    { x: CW*0.75, y: CH*0.25 },
+    { x: CW*0.25, y: CH*0.75 },
+    { x: CW*0.75, y: CH*0.75 },
+  ];
+  for(const q of quartiles){
+    const m = new Dot(q.x, q.y, dom);
+    m.type = 'media';
+    m.faction = null;
+    m.size = sz;
+    m.vx = 0; m.vy = 0;
+    dots.push(m);
+  }
+  document.getElementById('media-btn').classList.add('active');
+});
+
+document.getElementById('depression-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('depression');
+  globalDepression = !globalDepression;
+  document.getElementById('depression-btn').classList.toggle('active', globalDepression);
+  if(globalDepression){
+    // Assign individual shrink rates to all dots based on class
+    for(const d of dots){
+      if(d.dead) continue;
+      if(d.type==='emperor' || (d.type==='tyrant' && d.crowned) || d.type==='church' || d.type==='media'){
+        d._depShrink = 0.001 + Math.random() * 0.004;
+      } else if(d._elite){
+        d._depShrink = 0.002 + Math.random() * 0.013;
+      } else {
+        d._depShrink = 0.005 + Math.random() * 0.040;
+      }
+    }
+  } else {
+    // Stop shrinking, clear rates
+    for(const d of dots) d._depShrink = 0;
+  }
+});
+document.getElementById('chaos-btn').addEventListener('click',()=>{
+  if(!running) return;
+  buttonsUsed.add('chaos');
+  globalChaos = !globalChaos;
+  document.getElementById('chaos-btn').classList.toggle('active', globalChaos);
+  if(globalChaos){
+    // Chaos wipes media buildings (but not division)
+    for(const d of dots){ if(d.type==='media') d.dead = true; }
+    document.getElementById('media-btn')?.classList.remove('active');
+  }
+});
 
 document.getElementById('demor-btn').addEventListener('click',()=>{
   if(!running) return;
@@ -995,16 +1123,16 @@ function directConvert(d,toColor){
 }
 function politicize(d,toColor,leader){
   if(d.type==='tyrant'||d.type==='church'||d.faction==='church') return;
-  if(d.faction==='politician'){ d.color=toColor; return; }
-  d.color=toColor; d.faction='politician'; d.type='normal';
-  d.crowned=false;
-  // Free from demoralisation
+  // Politician frees from demoralisation (do this before any early return)
   if(d._demoralized){
     d._demoralized = false;
     d._flashColor = null;
     d._flashUntil = 0;
     d._ringR = undefined;
   }
+  if(d.faction==='politician'){ d.color=toColor; return; }
+  d.color=toColor; d.faction='politician'; d.type='normal';
+  d.crowned=false;
   // Inherit politician ID from leader (or any politician follower as proxy)
   if(leader){
     if(leader._polId) d._polId = leader._polId;
@@ -1025,16 +1153,10 @@ function emperize(d,toColor){
 }
 function cyanize(d,toColor){
   if(d.type==='tyrant'||d.type==='church') return;
+  if(d._demoralized) return; // demoralised dots cannot be seduced
   if(d.faction==='politician'){ d.color=toColor; return; }
   d.color=toColor; d.faction='revolutionary'; d.type='normal';
   d.crowned=false;
-  // Free from demoralisation
-  if(d._demoralized){
-    d._demoralized = false;
-    d._flashColor = null;
-    d._flashUntil = 0;
-    d._ringR = undefined;
-  }
   // growth applied by caller via tryGrow
 }
 function boostConvert(d){
@@ -1059,6 +1181,8 @@ function isProtected(d){
 // Rate-limited growth: each dot can gain growth at most 10 times per second.
 // Also: dots with 3+ same-colour neighbours touching cannot grow (anti-balloon).
 function tryGrow(d, amount){
+  // No growth during chaos
+  if(globalChaos) return false;
   // Count same-colour neighbours touching d right now (no stale cache)
   let count=0;
   for(const o of dots){
@@ -1079,6 +1203,8 @@ function tryGrow(d, amount){
 
 // ── Collisions ───────────────────────────────────────────────
 function effR(d){
+  // Media has a no-contact buffer so dots stay outside (small gap)
+  if(d.type==='media') return d.size + 6;
   // Rev followers and church followers use plain size (no crown halo) so they don't stick artificially
   if(d.type==='normal' && d.faction==='revolutionary') return d.size;
   if(d.type==='normal' && d.faction==='church') return d.size;
@@ -1103,17 +1229,18 @@ function collide(){
       // Alarmism transmission: panicked dot infects target on contact; infecter calms down. Brainwashed dots, politicians, emperors and church buildings immune.
       const isPolImmune = d => d.type==='politician' || d.faction==='politician';
       const isAlarmImmune = d => isPolImmune(d) || d.type==='emperor' || d.type==='church' || d._atWar;
-      // Emperors kill alarmists outright on direct contact
-      if(a.type==='emperor' && b._infected){ b.dead=true; continue; }
-      if(b.type==='emperor' && a._infected){ a.dead=true; continue; }
-      if(a._infected && a._panicked && !a._demoralized && !b._infected && !b._elite && !b._bwT && !isAlarmImmune(b) && b.type!=='tyrant'){
+      // Emperors recruit alarmists (keep their infected behaviour, change colour/faction)
+      if(a.type==='emperor' && b._infected){ b.color=a.color; b.faction='emperor'; continue; }
+      if(b.type==='emperor' && a._infected){ a.color=b.color; a.faction='emperor'; continue; }
+      const inPostChaos = d => d._postChaosUntil && performance.now() < d._postChaosUntil;
+      if(a._infected && a._panicked && !inPostChaos(a) && !inPostChaos(b) && !a._demoralized && !b._infected && !b._demoralized && !b._elite && !b._bwT && !isAlarmImmune(b) && b.type!=='tyrant'){
         b._infected = true; b._panicked = true; b._infectedFrames = 0;
         b.color = '#ffb3de'; b.faction = null; b.type = 'normal';
         b.size = Math.max(MIN_SZ, b.size - 5/b.size);
         const sp = Math.hypot(b.vx,b.vy)||0.1;
         b.vx = b.vx/sp * 4; b.vy = b.vy/sp * 4;
         a._panicked = false;
-      } else if(b._infected && b._panicked && !b._demoralized && !a._infected && !a._elite && !a._bwT && !isAlarmImmune(a) && a.type!=='tyrant'){
+      } else if(b._infected && b._panicked && !inPostChaos(a) && !inPostChaos(b) && !b._demoralized && !a._infected && !a._demoralized && !a._elite && !a._bwT && !isAlarmImmune(a) && a.type!=='tyrant'){
         a._infected = true; a._panicked = true; a._infectedFrames = 0;
         a.color = '#ffb3de'; a.faction = null; a.type = 'normal';
         a.size = Math.max(MIN_SZ, a.size - 5/a.size);
@@ -1122,6 +1249,7 @@ function collide(){
         b._panicked = false;
       }
       // Cure: 2 touches by same colour convert alarmist to that colour
+      // (Tyrants and emperors don't cure — they recruit via the tyrant/emperor branch in applyConversion)
       const cure = (al, healer) => {
         if(!al._cureTouches) al._cureTouches = {};
         al._cureTouches[healer.color] = (al._cureTouches[healer.color]||0) + 1;
@@ -1134,8 +1262,9 @@ function collide(){
           al.size = Math.max(MIN_SZ, al.size - 5/al.size);
         }
       };
-      if(a._infected && !b._infected && !b._elite && b.color!=='#28231E') cure(a, b);
-      if(b._infected && !a._infected && !a._elite && a.color!=='#28231E') cure(b, a);
+      const canCure = d => d.type !== 'tyrant' && d.type !== 'emperor';
+      if(a._infected && !b._infected && !b._elite && b.color!=='#28231E' && canCure(b)) cure(a, b);
+      if(b._infected && !a._infected && !a._elite && a.color!=='#28231E' && canCure(a)) cure(b, a);
       const d=Math.sqrt(d2); if(d<.001) continue;
       const nx=dx/d,ny=dy/d;
       const bwInvolved=a._bwT>0||b._bwT>0;
@@ -1209,8 +1338,8 @@ function collide(){
           continue;
         } else {
           const sep=(md-d)*.5;
-          const aStatic = (a.type==='emperor' || (a.type==='tyrant' && a.crowned));
-          const bStatic = (b.type==='emperor' || (b.type==='tyrant' && b.crowned));
+          const aStatic = (a.type==='emperor' || (a.type==='tyrant' && a.crowned) || a.type==='media');
+          const bStatic = (b.type==='emperor' || (b.type==='tyrant' && b.crowned) || b.type==='media');
           // Rev leader passes through other dots (impulse only on target)
           if(a.type==='revolutionary'){
             b.x+=nx*sep*2; b.y+=ny*sep*2;
@@ -1263,14 +1392,42 @@ function isEliteInRing(d){
   return dx*dx + dy*dy < ring.r*ring.r;
 }
 function applyConversion(a,b){
+  // Media buildings don't participate in conversion (handled by captivation logic)
+  if(a.type==='media' || b.type==='media') return;
   // Elite dots are immune only while inside their ring
   if(isEliteInRing(a)||isEliteInRing(b)) return;
   // Soldiers are inert: no conversion either way while at war
   if(a._atWar || b._atWar) return;
-  // Demoralised dots cannot spread anything — block conversion if the larger dot is demoralised
-  // (the smaller dot can still be converted BY a non-demoralised actor)
-  const lgInit = a.size >= b.size ? a : b;
-  if(lgInit._demoralized) return;
+  // Post-chaos deceleration: dots are inert until they settle (~2.5s after chaos ended)
+  const _pcNow = performance.now();
+  if((a._postChaosUntil && _pcNow < a._postChaosUntil) || (b._postChaosUntil && _pcNow < b._postChaosUntil)) return;
+  // Demoralised dots cannot be converted by ANY contact-based mechanism EXCEPT by politicians or tyrants
+  if(a._demoralized || b._demoralized){
+    const other = a._demoralized ? b : a;
+    const isPolOrTyrant = other.type === 'politician' || other.type === 'tyrant';
+    if(!isPolOrTyrant) return;
+  }
+  // ── Thugs: kill smaller non-same-colour dots; ignore same-colour, bigger, church, soldiers, leaders, demoralised
+  const handleThug = (thug, other) => {
+    if(other.dead) return false;
+    if(thug.color === 'white') return false; // white-dominant thugs are inert
+    if(other.color === thug.color) return false;
+    if(other.type === 'church' || other.faction === 'church') return false;
+    if(other._atWar || other._warOff) return false;
+    if(other._demoralized) return false;
+    if(other.type === 'thug') return false; // thugs don't fight each other regardless of colour
+    if(other.size >= thug.size) return false; // bigger or equal: ignored
+    // Leaders are protected
+    if(other.type==='emperor' || other.type==='tyrant' || other.type==='revolutionary' || other.type==='politician') return false;
+    if(other._elite) return false;
+    other.dead = true;
+    // Thug reverts to ordinary citizen after one kill
+    thug.type = 'normal';
+    thug.faction = null;
+    return true;
+  };
+  if(a.type==='thug'){ if(handleThug(a,b)) return; }
+  if(b.type==='thug'){ if(handleThug(b,a)) return; }
   // Ex-emperor: every contact shrinks it more aggressively; dies when small
   if(a._exEmperor){
     a.size = Math.max(MIN_SZ, a.size - 0.5);
@@ -1287,6 +1444,11 @@ function applyConversion(a,b){
     if(isEmpClass(other)) return false; // emperors don't fight each other
     // Same-colour: no effect (covers all loyal subjects — emperor faction, rev faction, brainwashed neutrals adopting the colour)
     if(other.color===emp.color) return false;
+    // Alarmists recruited (keep infected behaviour, change colour and faction)
+    if(other._infected && other.type==='normal'){
+      other.color = emp.color; other.faction = 'emperor';
+      return true;
+    }
     // White citizen: convert to emperor's follower
     if(other.color==='white' && other.type==='normal'){
       other.color = emp.color; other.faction = 'emperor';
@@ -1296,6 +1458,17 @@ function applyConversion(a,b){
     if(other.type==='politician'){
       other.color = emp.color; other.faction = 'emperor'; other.type = 'normal';
       other.crowned = false;
+      return true;
+    }
+    // Thugs: recruit (change colour, switch to normal type as emperor follower)
+    if(other.type==='thug'){
+      other.color = emp.color; other.faction = 'emperor'; other.type = 'normal';
+      return true;
+    }
+    // Demoralised: convert to emperor (frees them)
+    if(other._demoralized){
+      other.color = emp.color; other.faction = 'emperor';
+      other._demoralized = false; other._flashColor = null; other._flashUntil = 0; other._ringR = undefined;
       return true;
     }
     // Everyone else: kill
@@ -1313,6 +1486,8 @@ function applyConversion(a,b){
   if(a.type==='church'||a.faction==='church'||b.type==='church'||b.faction==='church'){
     const ch=(a.type==='church'||a.faction==='church')?a:b;
     const ot=ch===a?b:a;
+    // Post-chaos inert dots are skipped for church flock interactions too
+    if(ot._postChaosUntil && performance.now() < ot._postChaosUntil) return;
     if(ot.type==='church'||ot.faction==='church'){
       // Same-faction church: follower touching its leader gets +10 (skip growth while empire shares the colour)
       const empireSharesColor = dots.some(d => !d.dead && d.type==='emperor' && d.color===ch.color);
@@ -1341,7 +1516,13 @@ function applyConversion(a,b){
     const canConvert = chMass > ot.size*ot.size;
     const isLeader=ch.type==='church';
     if(isLeader){
-      if(canConvert){
+      // Pol followers and rev followers never converted by church (they have their own allegiance)
+      if(ot.faction==='politician' || ot.faction==='revolutionary'){
+        // Crowned leader still kills larger (regardless of mass)
+        if(ch.crowned && ot.size>ch.size) ot.dead=true;
+        return;
+      }
+      if(canConvert && !ot._demoralized){
         ot.color=ch.color; ot.faction='church'; ot.type='normal';
         tryGrow(ot, 20/(ot.size*ot.size));
       }
@@ -1351,14 +1532,8 @@ function applyConversion(a,b){
     }
     // Follower: any non-flock contact sends them to the church leader (never converts)
     if(ch.type==='normal' && ch.faction==='church'){
-      // Special: demoralised dots are susceptible to direct missionary conversion (mass check still applies)
-      if(ot._demoralized && canConvert && ot.type==='normal' && ot.type!=='tyrant'){
-        ot.color = ch.color; ot.faction = 'church'; ot.type = 'normal';
-        ot._demoralized = false; ot._flashColor = null; ot._flashUntil = 0; ot._ringR = undefined;
-        return;
-      }
       const isNonFlock = (ot.faction !== 'church') && (ot.type !== 'church');
-      if(isNonFlock && !ot._infected && ot.type!=='tyrant' && ot.type!=='politician' && ot.faction!=='politician'){
+      if(isNonFlock && !ot._infected && ot.type!=='tyrant' && ot.type!=='politician' && ot.faction!=='politician' && ot.faction!=='revolutionary' && ot.type!=='revolutionary'){
         const leader = dots.find(d => !d.dead && d.type==='church' && d.color===ch.color);
         if(leader){
           const tdx = leader.x - ot.x, tdy = leader.y - ot.y;
@@ -1390,6 +1565,22 @@ function applyConversion(a,b){
     if(b.type==='emperor') return;
     // Don't kill own followers
     if(b.faction==='emperor' && b.color===a.color) return;
+    // Demoralised dots are CONVERTED, not killed (tyrant has purpose, frees them)
+    if(b._demoralized){
+      b.color=a.color; b.faction='emperor'; b.type='normal';
+      b._demoralized=false; b._flashColor=null; b._flashUntil=0; b._ringR=undefined;
+      return;
+    }
+    // Thugs are recruited (become normal emperor follower)
+    if(b.type==='thug'){
+      b.color=a.color; b.faction='emperor'; b.type='normal';
+      return;
+    }
+    // Infected alarmists recruited (keep infected behaviour, change colour/faction)
+    if(b._infected && b.type==='normal'){
+      b.color=a.color; b.faction='emperor';
+      return;
+    }
     if(b.color==='white'&&b.type==='normal'){ b.color=a.color; b.faction='emperor'; return; }
     if(b.size<=a.size){
       if(isProtected(b)) return;
@@ -1402,6 +1593,19 @@ function applyConversion(a,b){
   if(b.type==='tyrant'){
     if(a.type==='emperor') return;
     if(a.faction==='emperor' && a.color===b.color) return;
+    if(a._demoralized){
+      a.color=b.color; a.faction='emperor'; a.type='normal';
+      a._demoralized=false; a._flashColor=null; a._flashUntil=0; a._ringR=undefined;
+      return;
+    }
+    if(a.type==='thug'){
+      a.color=b.color; a.faction='emperor'; a.type='normal';
+      return;
+    }
+    if(a._infected && a.type==='normal'){
+      a.color=b.color; a.faction='emperor';
+      return;
+    }
     if(a.color==='white'&&a.type==='normal'){ a.color=b.color; a.faction='emperor'; return; }
     if(a.size<=b.size){
       if(isProtected(a)) return;
@@ -1615,9 +1819,23 @@ function applyConversion(a,b){
   }
   if(a.faction==='elite' && b.faction==='elite') return;
 
+  // Politician leader vs demoralised: convert regardless of size
+  if(a.type==='politician' && b._demoralized){ politicize(b,a.color,a); return; }
+  if(b.type==='politician' && a._demoralized){ politicize(a,b.color,b); return; }
+
+  // Politician FOLLOWER vs demoralised: also converts regardless of size
+  if(a.faction==='politician' && b._demoralized){ politicize(b,a.color,a); return; }
+  if(b.faction==='politician' && a._demoralized){ politicize(a,b.color,b); return; }
+
+  // Populist followers (gold-coloured politicians) cannot convert alarmists
+  const POPULIST_COLORS_SET = new Set(['#C4A24E','#B58656','#A89060']);
+  const isPopulistFollower = d => d.faction==='politician' && POPULIST_COLORS_SET.has(d.color);
+
   // ── Politician faction
   if(a.faction==='politician' && b.faction!=='politician'){
     if(b.faction==='emperor') return;
+    // Populist followers cannot convert alarmists
+    if(isPopulistFollower(a) && b._infected) return;
     // Bigger red/blue converts pol follower to their colour
     if(a.type==='normal' && (b.color==='red'||b.color==='blue') && b.size>a.size){
       a.color=b.color; a.faction=null; return;
@@ -1627,6 +1845,7 @@ function applyConversion(a,b){
   }
   if(b.faction==='politician' && a.faction!=='politician'){
     if(a.faction==='emperor') return;
+    if(isPopulistFollower(b) && a._infected) return;
     if(b.type==='normal' && (a.color==='red'||a.color==='blue') && a.size>b.size){
       b.color=a.color; b.faction=null; return;
     }
@@ -1715,6 +1934,8 @@ function checkWin(){
   const bc=dots.filter(d=>d.color==='blue').length;
   document.getElementById('rcount').textContent=rc;
   document.getElementById('bcount').textContent=bc;
+  // Win conditions and dominance are paused during chaos
+  if(globalChaos) return;
   if(total>=5){
     if(dots.every(d=>d.faction==='church'||d.type==='church')){endGame('Theocracy. Great.','#7A9468',`${total} faithful`);return;}
 
@@ -1844,7 +2065,15 @@ function commitEndGame(title,color,stats){
   wt.textContent=title; wt.style.color=color;
   document.getElementById('win-stats').textContent=stats;
   document.getElementById('win-overlay').style.display='flex';
+  // Auto-restart after 30 seconds so the game can run indefinitely as a screensaver
+  if(winAutoRestartTimer) clearTimeout(winAutoRestartTimer);
+  winAutoRestartTimer = setTimeout(()=>{
+    if(!running){ // only restart if user hasn't manually restarted
+      startGame();
+    }
+  }, 15000);
 }
+let winAutoRestartTimer = null;
 
 // ── Loop ─────────────────────────────────────────────────────
 function loop(t){
@@ -1872,21 +2101,22 @@ function loop(t){
     }
     return;
   }
-  if(birthRate>0 && !pendingWin){
+  if(birthRate>0){
     birthFrames+=actionRate;
-    const interval=3600/birthRate;
+    const livePopCount = dots.filter(d => !d.dead && d.type==='normal' && !d._inChurch && !d._warOff).length;
+    const perCapita = birthRate * (livePopCount / 60);
+    const effBirthRate = globalChaos ? perCapita * 6 : globalDemoralize ? perCapita * 0.5 : globalDepression ? perCapita * 0.5 : perCapita;
+    const interval=3600/effBirthRate;
     if(birthFrames>=interval){
       birthFrames=0;
       let color = 'white';
       let bornAlarmist = false;
-      // If alarmism is dominant, newborns are born infected
-      if(domColorCache === '#ffb3de'){
-        color = '#ffb3de';
-        bornAlarmist = true;
-      }
-      // Under brainwash: probability of being born already in dominant colour = current dominance fraction
-      else if(globalBrainwash && domColorCache !== 'white' && Math.random() < domPctCache){
+      // Newborns take the mass-dominant colour. Pink dominance = alarmist newborns.
+      if(domColorCache && domColorCache !== 'white'){
         color = domColorCache;
+        if(domColorCache === '#ffb3de'){
+          bornAlarmist = true;
+        }
       }
       let sx = CW*.1+Math.random()*CW*.8;
       let sy = CH*.1+Math.random()*CH*.8;
@@ -1902,6 +2132,9 @@ function loop(t){
         sy = CH*.1+Math.random()*CH*.8;
       }
       const newDot = new Dot(sx, sy, color);
+      if(globalDepression){
+        newDot._depShrink = 0.005 + Math.random() * 0.040;
+      }
       if(bornAlarmist){
         newDot._infected = true;
         newDot._panicked = true;
@@ -1934,13 +2167,22 @@ function loop(t){
     colorMass[d.color]=(colorMass[d.color]||0)+d.size*d.size;
     if(d._elite) eliteMassTotal += d.size*d.size;
   }
-  // Update brainwash allegiance to top-mass colour
-  {
+  // Update brainwash allegiance to top-mass colour (skipped during chaos)
+  if(!globalChaos){
     let best=null, bestM=-1, totalM=0;
     for(const c in colorMass){ totalM += colorMass[c]; if(colorMass[c]>bestM){ bestM=colorMass[c]; best=c; } }
     if(best) domColorCache=best;
     domPctCache = (best && totalM>0) ? bestM/totalM : 0;
     for(const bw of brainwashers) bw.color=domColorCache;
+    // Thugs and mouthpieces always wear the dominant colour
+    if(best){
+      for(const d of dots){
+        if(d.dead) continue;
+        if((d.type==='thug' || d.type==='media') && d.color !== best){
+          d.color = best;
+        }
+      }
+    }
     // Update dominance bar
     if(best && totalM>0){
       const pct = (bestM/totalM)*100;
@@ -2096,6 +2338,8 @@ function loop(t){
     if(d.dead) continue;
     if(d._elite) continue; // elites pass through divider walls
     if(d._atWar) continue; // soldiers pass through divider walls
+    if(d.type==='tyrant') continue; // tyrants pass through divider walls
+    if(d.type==='revolutionary') continue; // revolutionary leaders pass through divider walls
     if(d._demoralized) continue; // demoralised dots ignore divider walls
     for(const w of walls){
       const wx=w.x2-w.x1,wy=w.y2-w.y1,len2=wx*wx+wy*wy;
@@ -2164,6 +2408,13 @@ function loop(t){
         d._infected = false;
         d._panicked = false;
         d._cureTouches = null;
+        // Brainwash frees from demoralisation
+        if(d._demoralized){
+          d._demoralized = false;
+          d._flashColor = null;
+          d._flashUntil = 0;
+          d._ringR = undefined;
+        }
         mismatched.splice(idx, 1);
       }
       }
@@ -2174,11 +2425,27 @@ function loop(t){
   }
 
   // ── Global demoralise: eligible dots orbit a ring around centre, flashing colours cosmetically
+  // ── Global depression: every dot shrinks at its assigned rate; dies when size hits 0
+  if(globalDepression){
+    for(const d of dots){
+      if(d.dead || d._inChurch || d._warOff) continue;
+      const rate = d._depShrink || 0;
+      if(rate > 0){
+        d.size -= rate;
+        if(d.size <= 0){ d.dead = true; }
+      }
+    }
+  }
+
   if(globalDemoralize){
     const cx = CW/2, cy = CH/2;
     const ringMid = Math.min(CW, CH) * 0.38; // donut centreline radius
     const _now = performance.now();
-    const exempt = d => d.type==='church' || d.type==='tyrant' || d.type==='emperor' || d.type==='revolutionary' || d._elite || d._atWar || d._warOff || d._inChurch || d.dead;
+    const exempt = d => d.type==='church' || d.type==='tyrant' || d.type==='emperor' || d.type==='revolutionary'
+      || d.type==='politician' || d.type==='thug' || d.type==='media'
+      || d.faction==='church' || d.faction==='revolutionary' || d.faction==='emperor'
+      || d._mediaConverted
+      || d._elite || d._atWar || d._warOff || d._inChurch || d.dead;
     for(const d of dots){
       if(exempt(d)) continue;
       d._demoralized = true;
@@ -2191,21 +2458,21 @@ function loop(t){
       }
       const tx = cx + Math.cos(ang) * d._ringR;
       const ty = cy + Math.sin(ang) * d._ringR;
-      // Ease position toward ring (slow drift in)
-      d.x += (tx - d.x) * 0.02;
-      d.y += (ty - d.y) * 0.02;
+      // Ease position toward ring (slow drift in — 3x slower than original)
+      d.x += (tx - d.x) * 0.0067;
+      d.y += (ty - d.y) * 0.0067;
       // Tangential velocity: perpendicular to radial direction, counter-clockwise
       const tanX = -Math.sin(ang);
       const tanY = Math.cos(ang);
       const targetSp = 0.8;
       const targetVx = tanX * targetSp;
       const targetVy = tanY * targetSp;
-      d.vx += (targetVx - d.vx) * 0.05;
-      d.vy += (targetVy - d.vy) * 0.05;
-      // Flashing: pick a new random colour every ~500ms
+      d.vx += (targetVx - d.vx) * 0.017;
+      d.vy += (targetVy - d.vy) * 0.017;
+      // Flashing: pick a new random colour every ~500ms (90% white, 5% red, 5% blue)
       if(!d._flashUntil || _now > d._flashUntil){
-        const pool = ['red', 'blue', 'white'];
-        d._flashColor = pool[Math.floor(Math.random()*3)];
+        const r = Math.random();
+        d._flashColor = r < 0.05 ? 'red' : r < 0.10 ? 'blue' : 'white';
         d._flashUntil = _now + 400 + Math.random()*300;
       }
     }
@@ -2213,6 +2480,79 @@ function loop(t){
     // Clear per-dot ring assignment when toggle is off (will reassign on next on)
     if(dots.some(d=>d._ringR !== undefined)){
       for(const d of dots){
+        d._ringR = undefined;
+      }
+    }
+  }
+
+  // ── Global chaos: 5x velocity, dots flash random faction colours (commit on toggle off)
+  if(globalChaos){
+    const _now2 = performance.now();
+    // Pool: white, red, blue, pink, plus populist golds (each at red/blue weight). No regime/church/rev colours.
+    const chaosPool = ['white','white','white','white','white','white','white','white','white','white','white','white',
+                       'red','red',
+                       'blue','blue',
+                       '#ffb3de','#ffb3de',
+                       '#C4A24E','#C4A24E',
+                       '#B58656','#B58656',
+                       '#A89060','#A89060'];
+    for(const d of dots){
+      if(d.dead) continue;
+      if(d._inChurch) continue;
+      // Leaders exempt
+      if(d.type==='church' || d.type==='tyrant' || d.type==='emperor' || d.type==='revolutionary' || d.type==='politician') continue;
+      if(d._elite) continue;
+      if(d._atWar || d._warOff) continue;
+      const targetSp = 5;
+      const sp = Math.hypot(d.vx, d.vy) || 0.0001;
+      if(sp < targetSp){
+        const k = targetSp / sp;
+        d.vx *= k;
+        d.vy *= k;
+      }
+      // Mild shrink during chaos
+      if(d.size > MIN_SZ) d.size = Math.max(MIN_SZ, d.size - 0.0025);
+      if(!d._chaosFlashUntil || _now2 > d._chaosFlashUntil){
+        d._chaosFlashColor = chaosPool[Math.floor(Math.random()*chaosPool.length)];
+        d._chaosFlashUntil = _now2 + 80 + Math.random()*120;
+      }
+    }
+  } else {
+    // Chaos turned off: COMMIT each dot's flash colour to its real colour and faction
+    for(const d of dots){
+      if(d._chaosFlashColor === undefined) continue;
+      const newColor = d._chaosFlashColor;
+      d.color = newColor;
+      if(newColor === '#C4A24E'){
+        d.faction = 'politician';
+        d.type = 'normal';
+        d._polId = null;
+      } else if(newColor === '#5A9FA4'){
+        d.faction = 'revolutionary';
+        d.type = 'normal';
+      } else if(newColor === '#7A9468'){
+        d.faction = 'church';
+        d.type = 'normal';
+      } else if(newColor === '#ffb3de'){
+        d.faction = null;
+        d.type = 'normal';
+        d._infected = true;
+        d._panicked = true;
+        d._infectedFrames = 0;
+        const sp = Math.hypot(d.vx,d.vy) || 0.1;
+        d.vx = d.vx/sp * 4;
+        d.vy = d.vy/sp * 4;
+      } else {
+        d.faction = null;
+        d.type = 'normal';
+      }
+      d._chaosFlashColor = undefined;
+      d._chaosFlashUntil = 0;
+      d._postChaosUntil = performance.now() + 2500; // 2.5s inert deceleration period
+      if(d._demoralized){
+        d._demoralized = false;
+        d._flashColor = null;
+        d._flashUntil = 0;
         d._ringR = undefined;
       }
     }
@@ -2229,6 +2569,19 @@ function loop(t){
         (!d._veteranUntil || performance.now() >= d._veteranUntil) &&
         d.type==='normal' && !d._elite &&
         d.age >= 15*60 && d.age <= 55*60);
+      // Determine soldier uniform colour at draft. Default drab grey.
+      // If a regime colour (rev, emperor, or elite-black) is mass-dominant, use that instead.
+      let soldierColor = '#5C5048';
+      const dom = domColorCache;
+      if(dom === '#28231E' && elites.length > 0){
+        soldierColor = '#28231E';
+      } else if(dom && dom !== 'white' && dom !== 'red' && dom !== 'blue' && dom !== '#ffb3de' && dom !== '#7A9468'){
+        const revAlive = dots.some(d => !d.dead && d.type==='revolutionary' && d.color === dom);
+        const emperorAlive = dots.some(d => !d.dead && d.type==='emperor' && d.color === dom);
+        if(revAlive || emperorAlive){
+          soldierColor = dom;
+        }
+      }
       for(const d of draftable){
         // If demoralised, snapshot the flash colour as real colour before draft (so it sticks if they return)
         if(d._demoralized){
@@ -2240,7 +2593,7 @@ function loop(t){
         }
         d._atWar = true;
         d._warDir = [wdx, wdy];
-        d.color = '#5C5048';
+        d.color = soldierColor;
         d.faction = null;
         d._polId = null;
         d.crowned = false;
@@ -2294,10 +2647,11 @@ function loop(t){
 
   // ── Elite: rings persist while any of their elite dots are alive
   if(elites.length>0){
-    // Any dot now FULLY inside a ring (whole body inside) gets recruited - except politicians
+    // Any dot now FULLY inside a ring (whole body inside) gets recruited - except politicians and alarmists
     for(const d of dots){
-      if(d.dead||d._elite||d.type==='church') continue;
+      if(d.dead||d._elite||d.type==='church'||d.type==='media') continue;
       if(d.type==='politician'||d.faction==='politician') continue;
+      if(d._infected && d.type==='normal') continue; // alarmists bounce off, handled in post-physics clamp
       for(const el of elites){
         const dx=d.x-el.x, dy=d.y-el.y;
         const dist=Math.hypot(dx,dy);
@@ -2310,6 +2664,8 @@ function loop(t){
           d._elite = true;
           d._eliteFullyIn = true; d._infected=false; d._panicked=false; d._cureTouches=null;
           d.color = '#28231E';
+          d._chaosFlashColor = undefined; d._chaosFlashUntil = 0;
+          d._demoralized = false; d._flashColor = null; d._flashUntil = 0; d._ringR = undefined;
           d.maxAge = d.age + Math.floor((90 + Math.random()*10) * 60);
           break;
         }
@@ -2333,13 +2689,14 @@ function loop(t){
           const vn = d.vx*nx + d.vy*ny;
           if(vn > 0){ d.vx -= (1+0.5)*vn*nx; d.vy -= (1+0.5)*vn*ny; }
         }
-      } else if(!d._elite && d.type!=='church'){
-        const isPol = d.type==='politician'||d.faction==='politician';
+      } else if(!d._elite && d.type!=='church' && d.type!=='media'){
+        const isPolLeader = d.type==='politician';
+        const isAlarmist = d._infected && d.type==='normal';
         for(const ring of elites){
           const dx = d.x - ring.x, dy = d.y - ring.y;
           const dist = Math.hypot(dx, dy);
-          if(isPol){
-            // Politicians always bounce off AND convert to elite-aligned
+          if(isPolLeader || isAlarmist){
+            // Politician LEADERS and alarmists bounce off the ring AND convert to elite-aligned (black)
             const minR = ring.r + d.size;
             if(dist < minR && dist > 0.01){
               const nx = dx/dist, ny = dy/dist;
@@ -2349,13 +2706,13 @@ function loop(t){
               if(vn < 0){ d.vx -= 2*vn*nx; d.vy -= 2*vn*ny; }
               if(!d._eliteAligned){
                 d.color = '#28231E';
-                d.faction = 'elite';
+                if(!isAlarmist) d.faction = 'elite';
                 d._eliteAligned = true;
               }
               break;
             }
           } else {
-            // Non-politicians: recruit when fully inside
+            // Everyone else (including followers of all factions) recruited when fully inside
             if(dist + d.size <= ring.r){
               if(d.type==='revolutionary'||d.type==='tyrant'||d.type==='emperor'){
                 cascadeNeutralize(d);
@@ -2365,6 +2722,8 @@ function loop(t){
               d._elite = true;
               d._eliteFullyIn = true; d._infected=false; d._panicked=false; d._cureTouches=null;
               d.color = '#28231E';
+              d._chaosFlashColor = undefined; d._chaosFlashUntil = 0;
+              d._demoralized = false; d._flashColor = null; d._flashUntil = 0; d._ringR = undefined;
               d.maxAge = d.age + Math.floor((90 + Math.random()*10) * 60);
               break;
             }
@@ -2375,7 +2734,7 @@ function loop(t){
     // Outsiders shrink while any ring exists (elites outside their ring also shrink; elite-aligned and emperors exempt)
     if(elites.length>0){
       for(const d of dots){
-        if(d.dead||d.type==='church') continue;
+        if(d.dead||d.type==='church'||d.type==='media') continue;
         if(isEliteInRing(d)) continue;
         if(d.faction==='elite') continue;
         if(d.type==='emperor') continue;
@@ -2389,22 +2748,25 @@ function loop(t){
       eliteFrames = (eliteFrames||0) + 1;
       if(eliteFrames >= 120){
         eliteFrames = 0;
-        const isExempt = d => d.dead || d.type==='church' || isEliteInRing(d) || d.faction==='elite' || d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned) || d._infected;
+        const isExempt = d => d.dead || d.type==='church' || d.type==='media' || d.type==='thug' || isEliteInRing(d) || d.faction==='elite' || d.type==='emperor' || (d.type==='tyrant' && d.crowned) || (d.type==='revolutionary' && d.crowned) || d._infected;
         const eligible = dots.filter(d => !isExempt(d));
-        // Convert non-whites to white; smaller dots picked first (weighted)
-        const nonWhites = eligible.filter(d => d.color !== 'white');
-        if(nonWhites.length > 0){
+        // If an emperor exists, the elite quietly convert outsiders to the emperor's colour. Otherwise grey them.
+        const liveEmperor = dots.find(d => !d.dead && d.type==='emperor');
+        const targetColor = liveEmperor ? liveEmperor.color : 'white';
+        const targetFaction = liveEmperor ? 'emperor' : null;
+        const offColour = eligible.filter(d => d.color !== targetColor);
+        if(offColour.length > 0){
           const toConvert = Math.ceil(eligible.length * 0.05);
-          nonWhites.sort((a,b) => a.size - b.size);
-          for(let i=0;i<Math.min(toConvert, nonWhites.length);i++){
-            const pickRange = Math.max(1, Math.ceil(nonWhites.length * 0.6));
+          offColour.sort((a,b) => a.size - b.size);
+          for(let i=0;i<Math.min(toConvert, offColour.length);i++){
+            const pickRange = Math.max(1, Math.ceil(offColour.length * 0.6));
             const idx = Math.floor(Math.random()*pickRange);
-            const d = nonWhites[idx];
+            const d = offColour[idx];
             if(!d) continue;
-            d.color = 'white'; d.faction = null; d.type = 'normal';
+            d.color = targetColor; d.faction = targetFaction; d.type = 'normal';
             d._infected = false; d._panicked = false; d._cureTouches = null;
             d.crowned = false;
-            nonWhites.splice(idx, 1);
+            offColour.splice(idx, 1);
           }
         }
       }
@@ -2415,6 +2777,65 @@ function loop(t){
   // Restore spawn size when no rings exist
   if(elites.length===0 && spawnSize<10){
     spawnSize=Math.min(10, spawnSize+0.01);
+  }
+
+  // ── Media: dots within the conversion annulus around any media building get captivated.
+  // After ~3 seconds in range, they convert to media's colour and walk off.
+  {
+    const medias = dots.filter(d => !d.dead && d.type==='media');
+    if(medias.length > 0){
+      const isMediaImmune = d => d.dead || d.type==='media' || d.type==='church' || d.type==='tyrant' || d.type==='emperor' || d.type==='revolutionary' || d.type==='politician' || d.type==='thug' || d._elite || d._atWar || d._warOff || d._infected || d.faction==='church' || d._inChurch;
+      for(const d of dots){
+        if(isMediaImmune(d)) { d._mediaFrames = 0; continue; }
+        let inRange = false;
+        let captivatedBy = null;
+        for(const m of medias){
+          const dx = d.x - m.x, dy = d.y - m.y;
+          const dist = Math.hypot(dx, dy);
+          const innerR = m.size + 6;     // no-contact (matches effR for media)
+          const outerR = m.size + 36;    // conversion radius (annulus extends ~30 units past the no-contact ring)
+          if(dist >= innerR && dist <= outerR){
+            // Demoralised dots can only be captivated by coloured media (not white)
+            if(d._demoralized && m.color === 'white') continue;
+            inRange = true;
+            captivatedBy = m;
+            break;
+          }
+        }
+        if(inRange && captivatedBy){
+          d._mediaFrames = (d._mediaFrames || 0) + 1;
+          // Slow them down while listening
+          d.vx *= 0.85;
+          d.vy *= 0.85;
+          // Gentle pull toward the mouthpiece (centripetal — keeps them lingering nearby)
+          const adx = captivatedBy.x - d.x, ady = captivatedBy.y - d.y;
+          const adist = Math.hypot(adx, ady) || 1;
+          d.vx += (adx/adist) * 0.04;
+          d.vy += (ady/adist) * 0.04;
+          if(d._mediaFrames >= 120){ // 2 seconds at 60fps
+            d.color = captivatedBy.color;
+            d.faction = null;
+            // Free from demoralisation; permanent immunity to re-demoralisation
+            if(d._demoralized){
+              d._demoralized = false;
+              d._flashColor = null;
+              d._flashUntil = 0;
+              d._ringR = undefined;
+            }
+            d._mediaConverted = true;
+            // Walk off: strong outward velocity away from media
+            const dx = d.x - captivatedBy.x, dy = d.y - captivatedBy.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const sp = 3;
+            d.vx = (dx/dist) * sp;
+            d.vy = (dy/dist) * sp;
+            d._mediaFrames = 0;
+          }
+        } else {
+          d._mediaFrames = 0;
+        }
+      }
+    }
   }
 
   // If an emperor died this frame, revert recoloured dots
@@ -2476,7 +2897,7 @@ function loop(t){
   }
   if(pendingWin){
     pendingWin.frames++;
-    if(pendingWin.frames >= 120){
+    if(pendingWin.frames >= 1200){
       commitEndGame(pendingWin.title, pendingWin.color, pendingWin.stats);
     }
   }
