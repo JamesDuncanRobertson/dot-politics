@@ -46,9 +46,9 @@ body{
 #bottom{display:flex;flex-direction:column;border-top:1px solid var(--rule);flex-shrink:0;padding-bottom:var(--safe-b);}
 .btn-row{height:44px;display:flex;border-bottom:1px solid var(--rule);}
 .btn-row:last-child{border-bottom:none;}
-#birthbar, .bbar{display:flex;align-items:center;gap:12px;padding:6px 18px;border-top:1px solid var(--rule);flex-shrink:0;}
-.bb-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);font-weight:400;width:60px;flex-shrink:0;}
-#birth-slider, #action-slider, #life-slider{flex:1;-webkit-appearance:none;appearance:none;background:transparent;height:18px;cursor:pointer;}
+#birthbar, .bbar{position:relative;padding:6px 18px;border-top:1px solid var(--rule);flex-shrink:0;}
+.bb-label{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);font-weight:400;}
+#birth-slider, #action-slider, #life-slider{display:block;width:100%;-webkit-appearance:none;appearance:none;background:transparent;height:18px;cursor:pointer;}
 #birth-slider::-webkit-slider-runnable-track, #action-slider::-webkit-slider-runnable-track, #life-slider::-webkit-slider-runnable-track{height:1px;background:var(--mid);}
 #birth-slider::-webkit-slider-thumb, #action-slider::-webkit-slider-thumb, #life-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:var(--text);margin-top:-6px;cursor:pointer;}
 #birth-slider::-moz-range-track, #action-slider::-moz-range-track, #life-slider::-moz-range-track{height:1px;background:var(--mid);}
@@ -132,7 +132,7 @@ body{
   <div class="btn-row">
     <button class="act-btn" id="pol-r-btn" style="color:var(--red);">Politician</button>
     <button class="act-btn" id="red-btn" style="color:var(--red);">Red</button>
-    <button class="act-btn" id="cit-btn">Citizen</button>
+    <button class="act-btn" id="cit-btn">Undecided</button>
     <button class="act-btn" id="blue-btn" style="color:var(--blue);">Blue</button>
     <button class="act-btn" id="pol-b-btn" style="color:var(--blue);">Politician</button>
   </div>
