@@ -38,9 +38,8 @@ body{
 .f-block.blue .f-count{color:var(--blue);}
 .hud-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
 .hud-name{font-size:13px;font-weight:400;letter-spacing:7px;text-transform:uppercase;color:var(--dim);}
-#dom-pct{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:2px 0 2px;font-variant-numeric:tabular-nums;position:relative;}
-#dom-pct .pct-num{display:inline-block;}
-#dom-pct .pct-sign{position:absolute;margin-left:2px;}
+#dom-pct-row{display:flex;align-items:center;justify-content:center;gap:32px;padding:4px 0;}
+#dom-pct{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;font-variant-numeric:tabular-nums;min-width:70px;}
 #pop-count{font-size:22px;font-weight:300;letter-spacing:2px;color:var(--dim);text-align:center;padding:6px 0 4px;font-variant-numeric:tabular-nums;}
 #status{font-size:8px;font-weight:400;letter-spacing:2px;text-transform:uppercase;color:var(--dim);min-height:11px;transition:color .4s;}
 #c{display:block;cursor:crosshair;flex:1;min-height:0;touch-action:none;-webkit-tap-highlight-color:transparent;}
@@ -63,9 +62,9 @@ body{
 .act-btn:last-child{border-right:none;}
 .act-btn:active{opacity:.6;}
 .act-btn.active{color:var(--text);background:rgba(58,55,53,0.06);}
-#reset-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:13px;line-height:1;padding:6px 8px;-webkit-tap-highlight-color:transparent;}
+#reset-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:20px;line-height:1;padding:4px 8px;-webkit-tap-highlight-color:transparent;}
 #reset-btn:hover{color:var(--text);}
-#pause-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:13px;line-height:1;padding:6px 8px;-webkit-tap-highlight-color:transparent;}
+#pause-btn{background:transparent;border:none;cursor:pointer;color:var(--dim);font-size:20px;line-height:1;padding:4px 8px;-webkit-tap-highlight-color:transparent;}
 #pause-btn:hover,#reset-btn:hover{color:var(--text);}
 .overlay{
   position:fixed;inset:0;z-index:200;background:rgba(236,231,223,0.97);
@@ -99,15 +98,17 @@ body{
 
 <div id="hud">
   <div class="hud-top">
-    <button id="reset-btn" title="Reset">↻</button>
     <div class="f-block red" id="r-btn"><div class="f-pip"></div><div class="f-count" id="rcount">10</div></div>
     <div class="hud-mid">
       <div class="hud-name">Politics</div>
     </div>
     <div class="f-block blue" id="b-btn"><div class="f-count" id="bcount">10</div><div class="f-pip"></div></div>
+  </div>
+  <div id="dom-pct-row">
+    <button id="reset-btn" title="Reset">↻</button>
+    <div id="dom-pct">0%</div>
     <button id="pause-btn" title="Pause">⏸</button>
   </div>
-  <div id="dom-pct">0%</div>
   <div id="dom-bar">
     <div id="dom-fill"></div>
   </div>
@@ -2195,7 +2196,7 @@ function loop(t){
       const pctEl = document.getElementById('dom-pct');
       if(pctEl){
         const disp = getDisplay(best);
-        pctEl.innerHTML = '<span class="pct-num">'+Math.round(pct)+'</span><span class="pct-sign">%</span>';
+        pctEl.textContent = Math.round(pct) + '%';
         pctEl.style.color = disp.fill;
       }
     }
